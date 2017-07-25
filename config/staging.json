@@ -1,0 +1,8 @@
+{
+    "logger": {
+        "name": "graph-client-staging",
+        "level": "debug",
+        "toFile": false,
+        "dirLogFile": null
+    }
+}
