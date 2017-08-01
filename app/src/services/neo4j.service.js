@@ -5,44 +5,51 @@ const neo4j = require('neo4j-driver').v1;
 const NEO4J_URI = process.env.NEO4J_URI || `bolt://${config.get('neo4j.host')}:${config.get('neo4j.port')}`;
 
 
-const CREATE_DATASET = `MERGE (dataset:Dataset {id: {id}}) RETURN dataset`;
-const CHECK_EXISTS_DATASET = `MATCH (dataset:Dataset {id: {id}}) RETURN dataset`;
+const CREATE_DATASET = `MERGE (dataset:DATASET {id: {id}}) RETURN dataset`;
+const CHECK_EXISTS_DATASET = `MATCH (dataset:DATASET {id: {id}}) RETURN dataset`;
 const CHECK_EXISTS_RESOURCE = `MATCH (n:{resourceType} {id: {resourceId}}) RETURN n`;
+
+const CREATE_RELATION = `
+  MATCH (resource:{resourceType} {id:{resourceId}})
+  MERGE (concept:CONCEPT{label:{label}})
+  MERGE (resource)-[r:RELATED_TO]->(concept) RETURN concept, resource, r
+`;
+
 const CREATE_WIDGET_AND_RELATION = `
-  MATCH(dataset: Dataset {id: {idDataset}})
-  MERGE (widget: Widget {id: {idWidget}})
-  MERGE (widget)-[r:belongsTo]->(dataset) RETURN widget, dataset, r
+  MATCH(dataset: DATASET {id: {idDataset}})
+  MERGE (widget: WIDGET {id: {idWidget}})
+  MERGE (widget)-[r:BELONGS_TO]->(dataset) RETURN widget, dataset, r
 `;
 
 const CREATE_LAYER_AND_RELATION = `
-  MATCH(dataset: Dataset {id: {idDataset}})
-  MERGE (layer: Layer {id: {idLayer}})
-  MERGE (layer)-[r:belongsTo]->(dataset) RETURN layer, dataset, r
+  MATCH(dataset: DATASET {id: {idDataset}})
+  MERGE (layer: LAYER {id: {idLayer}})
+  MERGE (layer)-[r:BELONGS_TO]->(dataset) RETURN layer, dataset, r
 `;
 
 const CREATE_METADATA_AND_RELATION = `
   MATCH (resource:{resourceType} {id: {resourceId}})
-  MERGE (metadata: Metadata {id: {idMetadata}})
-  MERGE (metadata)-[r:belongsTo]->(resource) RETURN metadata, resource, r
+  MERGE (metadata: METADATA {id: {idMetadata}})
+  MERGE (metadata)-[r:BELONGS_TO]->(resource) RETURN metadata, resource, r
 `;
 
 const DELETE_DATASET_NODE = `
-  MATCH (n)-[:belongsTo*0..]->(dataset:Dataset{id:{id}})
+  MATCH (n)-[:BELONGS_TO*0..]->(dataset:DATASET{id:{id}})
   DETACH DELETE dataset, n
 `;
 
 const DELETE_WIDGET_NODE = `
-  MATCH (n)-[:belongsTo*0..]->(widget:Widget{id:{id}}) 
+  MATCH (n)-[:BELONGS_TO*0..]->(widget:WIDGET{id:{id}}) 
   DETACH DELETE widget, n
 `;
 
 const DELETE_LAYER_NODE = `
-  MATCH (n)-[:belongsTo*0..]->(layer:Layer{id:{id}}) 
+  MATCH (n)-[:BELONGS_TO*0..]->(layer:LAYER{id:{id}}) 
   DETACH DELETE layer, n
 `;
 
 const DELETE_METADATA_NODE = `
-  MATCH (metadata:Metadata{id:{id}})
+  MATCH (metadata:METADATA{id:{id}})
   DETACH DELETE metadata
 `;
 
@@ -73,6 +80,17 @@ class Neo4JService {
     return this.session.run(CHECK_EXISTS_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId
     });
+  }
+
+  async createRelationWithConcepts(resourceType, resourceId, concepts) {
+    logger.debug('Creating relations with concepts, Type ', resourceType, ' and id ', resourceId, 'and concepts', concepts);
+    for (let i = 0, length = concepts.length; i < length; i++) {
+      logger.debug(CREATE_RELATION.replace('{resourceType}', resourceType));
+      await this.session.run(CREATE_RELATION.replace('{resourceType}', resourceType), {
+        resourceId,
+        label: concepts[i]
+      });
+    }
   }
 
   async createDatasetNode(id) {
