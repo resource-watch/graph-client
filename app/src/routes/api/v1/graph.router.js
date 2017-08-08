@@ -36,7 +36,7 @@ class GraphRouter {
   }
 
   static async createMetadataNodeAndRelation(ctx) {
-    ctx.assert(['Dataset', 'Layer', 'Widget'].indexOf(ctx.params.resourceType) >= 0, 400, `Resource ${ctx.params.resourceType} invalid`);
+    ctx.assert(['DATASET', 'LAYER', 'WIDGET'].indexOf(ctx.params.resourceType) >= 0, 400, `Resource ${ctx.params.resourceType} invalid`);
     logger.info('Creating metadata node and relation with idWidget ', ctx.params.idMetadata, ' and resourcetype ', ctx.params.resourceType, ' and idresource', ctx.params.idResource);
     ctx.body = await neo4jService.createMetadataNodeAndRelation(ctx.params.resourceType, ctx.params.idResource, ctx.params.idMetadata);
   }
@@ -94,6 +94,7 @@ async function checkExistsResource(ctx, next) {
     ctx.throw(404, `Resource ${ctx.params.resourceType} and id ${ctx.params.idResource} not found`);
     return;
   }
+  logger.debug('Exists');
   await next();
 }
 
