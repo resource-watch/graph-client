@@ -9,9 +9,9 @@ develop:
     LOCAL_URL: http://mymachine:4500
     CT_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im1pY3Jvc2VydmljZSIsImNyZWF0ZWRBdCI6IjIwMTYtMDktMTQifQ.IRCIRm1nfIQTfda_Wb6Pg-341zhV8soAgzw7dd5HxxQ
     API_VERSION: v1
-    NEO4J_URI: bolt://192.168.1.128:7687
-    NEO4J_USER: neo4j
-    NEO4J_PASSWORD: neo4j
+    # NEO4J_URI: bolt://mymachine:7687
+    NEO4J_USER: 
+    NEO4J_PASSWORD: 
   command: develop
   volumes:
     - ./app:/opt/graph-client/app
