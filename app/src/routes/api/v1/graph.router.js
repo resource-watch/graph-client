@@ -76,9 +76,9 @@ class GraphRouter {
   static async querySearchDatasets(ctx) {
     ctx.assert(ctx.query.concepts, 400, 'Concepts query params is required');
     logger.info('Searching dataset with concepts', ctx.query.concepts);
-    const results = await neo4jService.querySearchDatasets(ctx.query.concepts);    
+    const results = await neo4jService.querySearchDatasets(ctx.query.concepts);
     ctx.body = {
-      data: results.records
+      data: results.records ? results.records.map(el => el._fields[0]) : []
     };
   }
 
