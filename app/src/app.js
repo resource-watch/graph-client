@@ -15,6 +15,7 @@ const koaBody = require('koa-body')({
 });
 
 const app = new Koa();
+require('koa-qs')(app);
 
 app.use(convert(koaBody));
 

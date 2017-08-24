@@ -1,6 +1,7 @@
 const logger = require('logger');
 const Router = require('koa-router');
 const neo4jService = require('services/neo4j.service');
+const qs = require('qs');
 
 
 const router = new Router({
@@ -62,6 +63,41 @@ class GraphRouter {
     ctx.body = await neo4jService.deleteMetadata(ctx.params.id);
   }
 
+  static async createFavouriteRelationWithResource(ctx) {
+    logger.info('Creating favourite relation ');
+    ctx.body = await neo4jService.createFavouriteRelationWithResource(ctx.params.userId, ctx.params.resourceType, ctx.params.idResource);
+  }
+
+  static async deleteFavouriteRelationWithResource(ctx) {
+    logger.info('Creating favourite relation ');
+    ctx.body = await neo4jService.deleteFavouriteRelationWithResource(ctx.params.userId, ctx.params.resourceType, ctx.params.idResource);
+  }
+
+  static async querySearchDatasets(ctx) {
+    ctx.assert(ctx.query.concepts, 400, 'Concepts query params is required');
+    logger.info('Searching dataset with concepts', ctx.query.concepts);
+    const results = await neo4jService.querySearchDatasets(ctx.query.concepts);    
+    ctx.body = {
+      data: results.records
+    };
+  }
+
+  static async querySimilarDatasets(ctx) {
+    logger.info('Obtaining similar datasets', ctx.params.dataset);
+    const results = await neo4jService.querySimilarDatasets(ctx.params.dataset);
+    ctx.body = {
+      data: results.records
+    };
+  }
+
+  static async querySimilarDatasetsIncludingDescendent(ctx) {
+    logger.info('Obtaining similar datasets with descendent', ctx.params.dataset);
+    const results = await neo4jService.querySimilarDatasetsIncludingDescendent(ctx.params.dataset);
+    ctx.body = {
+      data: results.records
+    };
+  }
+
 }
 
 async function isAuthorized(ctx, next) {
@@ -99,12 +135,19 @@ async function checkExistsResource(ctx, next) {
 }
 
 router.get('/query', GraphRouter.query);
+router.get('/query/similar-dataset/:dataset', GraphRouter.querySimilarDatasets);
+router.get('/query/similar-dataset-including-descendent/:dataset', GraphRouter.querySimilarDatasetsIncludingDescendent);
+router.get('/query/search-datasets', GraphRouter.querySearchDatasets);
+
+
 router.post('/dataset/:id', isAuthorized, GraphRouter.createDataset);
 router.post('/widget/:idDataset/:idWidget', isAuthorized, checkExistsDataset, GraphRouter.createWidgetNodeAndRelation);
 router.post('/layer/:idDataset/:idLayer', isAuthorized, checkExistsDataset, GraphRouter.createLayerNodeAndRelation);
 router.post('/metadata/:resourceType/:idResource/:idMetadata', isAuthorized, checkExistsResource, GraphRouter.createMetadataNodeAndRelation);
 router.post('/:resourceType/:idResource/associate', isAuthorized, checkExistsResource, GraphRouter.associateResource);
+router.post('/favourite/:resourceType/:idResource/:userId', isAuthorized, checkExistsResource, GraphRouter.createFavouriteRelationWithResource);
 
+router.delete('/favourite/:resourceType/:idResource/:userId', isAuthorized, checkExistsResource, GraphRouter.deleteFavouriteRelationWithResource);
 router.delete('/dataset/:id', isAuthorized, GraphRouter.deleteDataset);
 router.delete('/widget/:id', isAuthorized, GraphRouter.deleteWidgetNodeAndRelation);
 router.delete('/layer/:id', isAuthorized, GraphRouter.deleteLayerNodeAndRelation);

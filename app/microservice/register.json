@@ -40,6 +40,14 @@
 			"path": "/api/v1/graph/metadata/:resourceType/:idResource/:idMetadata"
 		}
 	}, {
+		"path": "/v1/graph/favourite/:resourceType/:idResource/:userId",
+		"method": "POST",
+		"authenticated": true,
+		"redirect": {
+			"method": "POST",
+			"path": "/api/v1/graph/favourite/:resourceType/:idResource/:userId"
+		}
+	}, {
 		"path": "/v1/graph/:resource/:id/associate",
 		"method": "POST",
 		"authenticated": true,
@@ -78,6 +86,35 @@
 		"redirect": {
 			"method": "DELETE",
 			"path": "/api/v1/graph/metadata/:id"
+		}
+	}, {
+		"path": "/v1/graph/favourite/:resourceType/:idResource/:userId",
+		"method": "DELETE",
+		"authenticated": true,
+		"redirect": {
+			"method": "DELETE",
+			"path": "/api/v1/graph/favourite/:resourceType/:idResource/:userId"
+		}
+	}, {
+		"path": "/v1/graph/query/similar-dataset/:dataset",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/similar-dataset/:dataset"
+		}
+	}, {
+		"path": "/v1/graph/query/similar-dataset-including-descendent/:dataset",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/similar-dataset-including-descendent/:dataset"
+		}
+	}, {
+		"path": "/v1/graph/query/search-datasets",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/search-datasets"
 		}
 	}]
 }

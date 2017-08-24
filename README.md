@@ -18,6 +18,7 @@ that you have [Docker Compose](https://docs.docker.com/compose/install/)
 installed on your machine.
 
 ```
+
 git clone https://github.com/Vizzuality/graph-client
 cd graph-client
 ./service.sh develop
@@ -41,16 +42,16 @@ Add the next constraints in Neo4j:
 
 ```
 // only one dataset node with the same id
-CREATE CONSTRAINT ON (dataset:Dataset) ASSERT dataset.id IS UNIQUE
+CREATE CONSTRAINT ON (dataset:DATASET) ASSERT dataset.id IS UNIQUE
 
 // only one widget node with the same id
-CREATE CONSTRAINT ON (widget:Widget) ASSERT widget.id IS UNIQUE
+CREATE CONSTRAINT ON (widget:WIDGET) ASSERT widget.id IS UNIQUE
 
 // only one layer node with the same id
-CREATE CONSTRAINT ON (layer:Layer) ASSERT layer.id IS UNIQUE
+CREATE CONSTRAINT ON (layer:LAYER) ASSERT layer.id IS UNIQUE
 
 // only one metadata node with the same id
-CREATE CONSTRAINT ON (metadata:Metadata) ASSERT metadata.id IS UNIQUE
+CREATE CONSTRAINT ON (metadata:METADATA) ASSERT metadata.id IS UNIQUE
 
 
 ```

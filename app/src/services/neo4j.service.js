@@ -8,11 +8,19 @@ const NEO4J_URI = process.env.NEO4J_URI || `bolt://${config.get('neo4j.host')}:$
 const CREATE_DATASET = `MERGE (dataset:DATASET {id: {id}}) RETURN dataset`;
 const CHECK_EXISTS_DATASET = `MATCH (dataset:DATASET {id: {id}}) RETURN dataset`;
 const CHECK_EXISTS_RESOURCE = `MATCH (n:{resourceType} {id: {resourceId}}) RETURN n`;
+const CREATE_USER = `MERGE (user:USER {id: {id}}) RETURN user`;
+const CHECK_EXISTS_USER = `MATCH (dataset:USER {id: {id}}) RETURN dataset`;
 
 const CREATE_RELATION = `
   MATCH (resource:{resourceType} {id:{resourceId}})
   MERGE (concept:CONCEPT{label:{label}})
-  MERGE (resource)-[r:RELATED_TO]->(concept) RETURN concept, resource, r
+  MERGE (resource)-[r:TAGGED_WITH]->(concept) RETURN concept, resource, r
+`;
+
+const CREATE_RELATION_FAVOURITE_AND_RESOURCE = `
+MATCH (resource:{resourceType} {id:{resourceId}})
+MERGE (user:USER{id:{userId}})
+MERGE (user)-[r:FAVOURITE]->(concept) RETURN user, resource, r
 `;
 
 const CREATE_WIDGET_AND_RELATION = `
@@ -38,6 +46,13 @@ const DELETE_DATASET_NODE = `
   DETACH DELETE dataset, n
 `;
 
+
+const DELETE_RELATION_FAVOURITE_AND_RESOURCE = `
+  MATCH (user:USER{id:{userId}})-[r:FAVOURITE]->(resource:{resourceType} {id:{resourceId}})
+  DETACH DELETE r
+`;
+
+
 const DELETE_WIDGET_NODE = `
   MATCH (n)-[:BELONGS_TO*0..]->(widget:WIDGET{id:{id}}) 
   DETACH DELETE widget, n
@@ -52,6 +67,37 @@ const DELETE_METADATA_NODE = `
   MATCH (metadata:METADATA{id:{id}})
   DETACH DELETE metadata
 `;
+
+const QUERY_SIMILAR_DATASET = `
+MATCH p=(d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:CONCEPT)<-[:TAGGED_WITH]-(d2:DATASET)
+WITH count(p) AS number_of_shared_concepts, COLLECT(c.id) AS shared_concepts, d2
+RETURN d2.id, shared_concepts, number_of_shared_concepts
+ORDER BY number_of_shared_concepts DESC
+`;
+
+const QUERY_SIMILAR_DATASET_WITH_DESCENDENT = `
+MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:CONCEPT)
+WITH COLLECT(c.id) AS main_tags
+MATCH (d2:DATASET)-[:TAGGED_WITH]->(c1:CONCEPT)-[*]->(c2:CONCEPT)
+WHERE c1.id IN main_tags OR c2.id IN main_tags
+WITH COLLECT(DISTINCT c1.id) AS dataset_tags, d2.id AS dataset
+WITH size(dataset_tags) AS number_of_ocurrences, dataset_tags, dataset
+RETURN dataset, dataset_tags, number_of_ocurrences
+ORDER BY number_of_ocurrences DESC
+`;
+
+const QUERY_SEARCH = `
+MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+WHERE (c.id IN {concept1} OR c2.id IN {concept1})
+WITH COLLECT(d.id) AS datasets
+MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+WHERE (c.id IN {concept2} OR c2.id IN {concept2}) AND d.id IN datasets
+WITH COLLECT(d.id) AS intersection
+MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+WHERE (c.id IN {concept3} OR c2.id IN {concept3}) AND d.id IN intersection
+RETURN DISTINCT d.id
+`;
+
 
 class Neo4JService {
 
@@ -93,9 +139,45 @@ class Neo4JService {
     }
   }
 
+  async createFavouriteRelationWithResource(userId, resourceType, resourceId) {
+    
+    logger.debug('Creating favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
+    logger.debug('Checking if exist user');
+    const users = await this.session.run(CHECK_EXISTS_USER, {
+      id: userId
+    });
+    if (!users.records || users.records.length === 0) {
+      logger.debug('Creating user node');
+      await this.session.run(CREATE_USER, {
+        id: userId
+      });
+    }
+    await this.session.run(CREATE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
+      resourceId,
+      userId
+    });
+  }
+
+  async deleteFavouriteRelationWithResource(userId, resourceType, resourceId) {
+    
+    logger.debug('deleting favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
+    
+    await this.session.run(DELETE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
+      resourceId,
+      userId
+    });
+  }
+
   async createDatasetNode(id) {
     logger.debug('Creating dataset with id ', id);
     return this.session.run(CREATE_DATASET, {
+      id
+    });
+  }
+
+  async createUserNode(id) {
+    logger.debug('Creating user with id ', id);
+    return this.session.run(CREATE_USER, {
       id
     });
   }
@@ -116,6 +198,14 @@ class Neo4JService {
 
   async createWidgetNodeAndRelation(idDataset, idWidget) {
     logger.debug('Creating widget and relation with id ', idWidget, '; id dataset', idDataset);
+    return this.session.run(CREATE_WIDGET_AND_RELATION, {
+      idWidget,
+      idDataset
+    });
+  }
+
+  async createUserNodeAndRelation(idDataset, idWidget) {
+    logger.debug('Creating user and relation with id ', idWidget, '; id dataset', idDataset);
     return this.session.run(CREATE_WIDGET_AND_RELATION, {
       idWidget,
       idDataset
@@ -157,6 +247,35 @@ class Neo4JService {
     return this.session.run(DELETE_METADATA_NODE, {
       id
     });
+  }
+
+  async querySimilarDatasets(dataset) {
+    logger.debug('Obtaining similar datasets of ', dataset);
+    return this.session.run(QUERY_SIMILAR_DATASET, {
+      dataset
+    });
+  }
+
+  async querySimilarDatasetsWithDescendent(dataset) {
+    logger.debug('Obtaining similar datasets with descendent of ', dataset);
+    return this.session.run(QUERY_SIMILAR_DATASET_WITH_DESCENDENT, {
+      dataset
+    });
+  }
+
+  async querySearchDatasets(concepts) {
+    logger.debug('Searching datasets with concepts ', concepts);
+    const params = {
+      concepts1: [],
+      concepts2: [],
+      concepts3: []
+    };
+    if (concepts) {
+      for (let i = 0, length = concepts.length; i < length; i++) {
+        params[`concepts${i}`] = concepts[i];
+      }
+    }
+    return this.session.run(QUERY_SEARCH, params);
   }
 
 }

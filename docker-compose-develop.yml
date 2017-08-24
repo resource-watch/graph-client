@@ -2,8 +2,6 @@ develop:
   extends:
     file: base.yml
     service: base
-  ports:
-    - "35739:35729"
   environment:
     CT_URL: http://mymachine:9000
     LOCAL_URL: http://mymachine:4500
@@ -12,6 +10,7 @@ develop:
     # NEO4J_URI: bolt://mymachine:7687
     NEO4J_USER: 
     NEO4J_PASSWORD: 
+    CT_REGISTER_MODE: auto
   command: develop
   volumes:
     - ./app:/opt/graph-client/app
