@@ -13,7 +13,7 @@ const CHECK_EXISTS_USER = `MATCH (dataset:USER {id: {id}}) RETURN dataset`;
 
 const CREATE_RELATION = `
   MATCH (resource:{resourceType} {id:{resourceId}})
-  MERGE (concept:CONCEPT{label:{label}})
+  MERGE (concept:CONCEPT{id:{label}})
   MERGE (resource)-[r:TAGGED_WITH]->(concept) RETURN concept, resource, r
 `;
 
@@ -88,13 +88,13 @@ ORDER BY number_of_ocurrences DESC
 
 const QUERY_SEARCH_PARTS= [`
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
-WHERE (c.id IN {concepts1} OR c2.id IN {concepts1})
-WITH COLLECT(d.id) AS datasets
+WHERE (c.id IN ['africa'] OR c2.id IN ['africa'])
 `, `
+WITH COLLECT(d.id) AS datasets
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE (c.id IN {concepts2} OR c2.id IN {concepts2}) AND d.id IN datasets
-WITH COLLECT(d.id) AS intersection
 `, `
+WITH COLLECT(d.id) AS intersection
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE (c.id IN {concepts3} OR c2.id IN {concepts3}) AND d.id IN intersection
 `];
