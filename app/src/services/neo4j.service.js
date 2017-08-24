@@ -88,13 +88,13 @@ ORDER BY number_of_ocurrences DESC
 
 const QUERY_SEARCH = `
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
-WHERE (c.id IN {concept1} OR c2.id IN {concept1})
+WHERE (c.id IN {concepts1} OR c2.id IN {concepts1})
 WITH COLLECT(d.id) AS datasets
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
-WHERE (c.id IN {concept2} OR c2.id IN {concept2}) AND d.id IN datasets
+WHERE (c.id IN {concepts2} OR c2.id IN {concepts2}) AND d.id IN datasets
 WITH COLLECT(d.id) AS intersection
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
-WHERE (c.id IN {concept3} OR c2.id IN {concept3}) AND d.id IN intersection
+WHERE (c.id IN {concepts3} OR c2.id IN {concepts3}) AND d.id IN intersection
 RETURN DISTINCT d.id
 `;
 
