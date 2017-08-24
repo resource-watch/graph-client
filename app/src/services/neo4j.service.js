@@ -20,7 +20,7 @@ const CREATE_RELATION = `
 const CREATE_RELATION_FAVOURITE_AND_RESOURCE = `
 MATCH (resource:{resourceType} {id:{resourceId}})
 MERGE (user:USER{id:{userId}})
-MERGE (user)-[r:FAVOURITE]->(concept) RETURN user, resource, r
+MERGE (user)-[r:FAVOURITE]->(resource) RETURN user, resource, r
 `;
 
 const CREATE_WIDGET_AND_RELATION = `
@@ -48,7 +48,7 @@ const DELETE_DATASET_NODE = `
 
 
 const DELETE_RELATION_FAVOURITE_AND_RESOURCE = `
-  MATCH (user:USER{id:{userId}})-[r:FAVOURITE]->(resource:{resourceType} {id:{resourceId}})
+  MATCH (user:USER{id:{userId}})-[r:FAVOURITE]->(resource:{resourceType}{id:{resourceId}})
   DETACH DELETE r
 `;
 
