@@ -86,15 +86,20 @@ RETURN dataset, dataset_tags, number_of_ocurrences
 ORDER BY number_of_ocurrences DESC
 `;
 
-const QUERY_SEARCH = `
+const QUERY_SEARCH_PARTS= [`
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE (c.id IN {concepts1} OR c2.id IN {concepts1})
 WITH COLLECT(d.id) AS datasets
+`, `
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE (c.id IN {concepts2} OR c2.id IN {concepts2}) AND d.id IN datasets
 WITH COLLECT(d.id) AS intersection
+`, `
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE (c.id IN {concepts3} OR c2.id IN {concepts3}) AND d.id IN intersection
+`];
+
+const QUERY_SEARCH_FINAL = `
 RETURN DISTINCT d.id
 `;
 
@@ -265,17 +270,23 @@ class Neo4JService {
 
   async querySearchDatasets(concepts) {
     logger.debug('Searching datasets with concepts ', concepts);
+    let query = '';
     const params = {
       concepts1: [],
       concepts2: [],
       concepts3: []
     };
-    if (concepts) {
+    if (concepts && concepts.length > 0) {
       for (let i = 0, length = concepts.length; i < length; i++) {
+        query += QUERY_SEARCH_PARTS[i];
         params[`concepts${i}`] = concepts[i];
       }
+      query += QUERY_SEARCH_FINAL;
     }
-    return this.session.run(QUERY_SEARCH, params);
+    if (query) {
+      return this.session.run(query, params);
+    } 
+    return null;
   }
 
 }

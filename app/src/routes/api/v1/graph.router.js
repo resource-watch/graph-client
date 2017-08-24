@@ -94,7 +94,7 @@ class GraphRouter {
     logger.info('Obtaining similar datasets with descendent', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasetsIncludingDescendent(ctx.params.dataset);
     ctx.body = {
-      data: results.records
+      data: results ? results.records : []
     };
   }
 
