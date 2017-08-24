@@ -86,7 +86,12 @@ class GraphRouter {
     logger.info('Obtaining similar datasets', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasets(ctx.params.dataset);
     ctx.body = {
-      data: results.records
+      data: results && results.records ? results.records.map((el) => {
+        return {
+          dataset: el._fields[0],
+          numberOfOcurrences: el._fieldLookup.number_of_shared_concepts
+        };
+      }) : []
     };
   }
 
@@ -94,7 +99,12 @@ class GraphRouter {
     logger.info('Obtaining similar datasets with descendent', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasetsIncludingDescendent(ctx.params.dataset);
     ctx.body = {
-      data: results ? results.records : []
+      data: results && results.records ? results.records.map((el) => {
+        return {
+          dataset: el._fields[0],
+          numberOfOcurrences: el._fieldLookup.number_of_ocurrences
+        };
+      }) : []
     };
   }
 
