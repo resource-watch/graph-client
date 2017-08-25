@@ -88,7 +88,7 @@ ORDER BY number_of_ocurrences DESC
 
 const QUERY_SEARCH_PARTS= [`
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
-WHERE (c.id IN ['africa'] OR c2.id IN ['africa'])
+WHERE (c.id IN {concepts1} OR c2.id IN {concepts1})
 `, `
 WITH COLLECT(d.id) AS datasets
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
