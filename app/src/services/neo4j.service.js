@@ -279,7 +279,7 @@ class Neo4JService {
     if (concepts && concepts.length > 0) {
       for (let i = 0, length = concepts.length; i < length; i++) {
         query += QUERY_SEARCH_PARTS[i];
-        params[`concepts${i+1}`] = concepts[i].map(el => `'${el}'`).join(',');
+        params[`concepts${i+1}`] = concepts[i].map(el => `"${el}"`).join(',');
       }
       query += QUERY_SEARCH_FINAL;
     }
