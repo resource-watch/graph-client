@@ -88,15 +88,15 @@ ORDER BY number_of_ocurrences DESC
 
 const QUERY_SEARCH_PARTS= [`
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
-WHERE (c.id IN {concepts1} OR c2.id IN {concepts1})
+WHERE (c.id IN [{concepts1}] OR c2.id IN [{concepts1}])
 `, `
 WITH COLLECT(d.id) AS datasets
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
-WHERE (c.id IN {concepts2} OR c2.id IN {concepts2}) AND d.id IN datasets
+WHERE (c.id IN [{concepts2}] OR c2.id IN [{concepts2}]) AND d.id IN datasets
 `, `
 WITH COLLECT(d.id) AS intersection
 MATCH (c:CONCEPT)<-[*]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
-WHERE (c.id IN {concepts3} OR c2.id IN {concepts3}) AND d.id IN intersection
+WHERE (c.id IN [{concepts3}] OR c2.id IN [{concepts3}]) AND d.id IN intersection
 `];
 
 const QUERY_SEARCH_FINAL = `
@@ -279,7 +279,7 @@ class Neo4JService {
     if (concepts && concepts.length > 0) {
       for (let i = 0, length = concepts.length; i < length; i++) {
         query += QUERY_SEARCH_PARTS[i];
-        params[`concepts${i}`] = concepts[i];
+        params[`concepts${i}`] = concepts[i].map(el => `'${el}'`).join(',');
       }
       query += QUERY_SEARCH_FINAL;
     }
