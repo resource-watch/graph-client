@@ -283,6 +283,8 @@ class Neo4JService {
       }
       query += QUERY_SEARCH_FINAL;
     }
+    logger.info('query', query);
+    logger.info('params', params);
     if (query) {
       return this.session.run(query, params);
     } 
