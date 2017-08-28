@@ -74,9 +74,15 @@ class GraphRouter {
   }
 
   static async querySearchDatasets(ctx) {
-    ctx.assert(ctx.query.concepts, 400, 'Concepts query params is required');
-    logger.info('Searching dataset with concepts', ctx.query.concepts);
-    const results = await neo4jService.querySearchDatasets(ctx.query.concepts);
+    let concepts = null;
+    if (ctx.method === 'GET') {
+      ctx.assert(ctx.query.concepts, 400, 'Concepts query params is required');
+      concepts = ctx.query.concepts;
+    } else {
+      concepts = ctx.request.body.concepts;
+    }
+    logger.info('Searching dataset with concepts', concepts);
+    const results = await neo4jService.querySearchDatasets(concepts);
     ctx.body = {
       data: results.records ? results.records.map(el => el._fields[0]) : []
     };
@@ -86,7 +92,7 @@ class GraphRouter {
     logger.info('Obtaining similar datasets', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasets(ctx.params.dataset);
     ctx.body = {
-      data: results && results.records ? results.records.map((el) => {
+      data: results && results.records ? results.records.slice(0, ctx.query.limit || 3).map((el) => {
         return {
           dataset: el._fields[0],
           concepts: el._fields[1],
@@ -100,7 +106,7 @@ class GraphRouter {
     logger.info('Obtaining similar datasets with descendent', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasetsIncludingDescendent(ctx.params.dataset);
     ctx.body = {
-      data: results && results.records ? results.records.map((el) => {
+      data: results && results.records ? results.records.slice(0, ctx.query.limit || 3).map((el) => {
         return {
           dataset: el._fields[0],
           concepts: el._fields[1],
@@ -150,6 +156,7 @@ router.get('/query', GraphRouter.query);
 router.get('/query/similar-dataset/:dataset', GraphRouter.querySimilarDatasets);
 router.get('/query/similar-dataset-including-descendent/:dataset', GraphRouter.querySimilarDatasetsIncludingDescendent);
 router.get('/query/search-datasets', GraphRouter.querySearchDatasets);
+router.post('/query/search-datasets', GraphRouter.querySearchDatasets);
 
 
 router.post('/dataset/:id', isAuthorized, GraphRouter.createDataset);
