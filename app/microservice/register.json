@@ -103,6 +103,27 @@
 			"path": "/api/v1/graph/query/similar-dataset/:dataset"
 		}
 	}, {
+		"path": "/v1/graph/query/list-concepts",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/list-concepts"
+		}
+	}, {
+		"path": "/v1/graph/query/concepts-inferred",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/concepts-inferred"
+		}
+	}, {
+		"path": "/v1/graph/query/concepts-inferred",
+		"method": "POST",
+		"redirect": {
+			"method": "POST",
+			"path": "/api/v1/graph/query/concepts-inferred"
+		}
+	}, {
 		"path": "/v1/graph/query/similar-dataset-including-descendent/:dataset",
 		"method": "GET",
 		"redirect": {

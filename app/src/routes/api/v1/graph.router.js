@@ -10,11 +10,6 @@ const router = new Router({
 
 class GraphRouter {
 
-  static async query(ctx) {
-    ctx.assert(ctx.query.query, 400, '\'query\' query param required');
-    ctx.body = await neo4jService.query(ctx.query.query);
-  }
-
   static async createDataset(ctx) {
     logger.info('Creating dataset node with id ', ctx.params.id);
     ctx.body = await neo4jService.createDatasetNode(ctx.params.id);
@@ -71,6 +66,23 @@ class GraphRouter {
   static async deleteFavouriteRelationWithResource(ctx) {
     logger.info('Creating favourite relation ');
     ctx.body = await neo4jService.deleteFavouriteRelationWithResource(ctx.params.userId, ctx.params.resourceType, ctx.params.idResource);
+  }
+
+  static async conceptsInferred(ctx) {
+    let concepts = null;
+    if (ctx.query.concepts) {
+      concepts = ctx.query.concepts.split(',').map(c => c.trim());
+    } else if (ctx.request.body) {
+      concepts = ctx.request.body.concepts;
+    }
+    ctx.assert(concepts, 'Concepts is required');
+    logger.info('Getting concepts inferred ', concepts);
+    ctx.body = await neo4jService.conceptsInferred(concepts);
+  }
+
+  static async listConcepts(ctx) {
+    logger.info('Getting list concepts ');
+    ctx.body = await neo4jService.listConcepts();
   }
 
   static async querySearchDatasets(ctx) {
@@ -152,7 +164,9 @@ async function checkExistsResource(ctx, next) {
   await next();
 }
 
-router.get('/query', GraphRouter.query);
+router.get('/query/list-concepts', GraphRouter.listConcepts);
+router.get('/query/concepts-inferred', GraphRouter.conceptsInferred);
+router.post('/query/concepts-inferred', GraphRouter.conceptsInferred);
 router.get('/query/similar-dataset/:dataset', GraphRouter.querySimilarDatasets);
 router.get('/query/similar-dataset-including-descendent/:dataset', GraphRouter.querySimilarDatasetsIncludingDescendent);
 router.get('/query/search-datasets', GraphRouter.querySearchDatasets);

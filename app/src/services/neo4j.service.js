@@ -114,6 +114,20 @@ RETURN DISTINCT datasets
 `;
 
 
+const QUERY_GET_LIST_CONCEPTS = `
+MATCH (c:CONCEPT)
+RETURN c.id, c.label, c.synonyms
+`;
+
+const QUERY_GET_CONCEPTS_INFERRED_FROM_LIST = `
+MATCH (c:CONCEPT)-[*]->(c2:CONCEPT)
+WHERE c.id IN {concepts}
+WITH collect(DISTINCT c.id) + collect(DISTINCT c2.id) as results
+MATCH (c:CONCEPT)
+WHERE c.id IN results
+RETURN c.id, c.label, c.synonyms
+`;
+
 class Neo4JService {
 
   constructor() {
@@ -134,6 +148,18 @@ class Neo4JService {
       return transaction.run(query);
     });
     return readTxResultPromise;
+  }
+
+  async getListConcepts() {
+    logger.debug('Getting list concepts');
+    return this.session.run(QUERY_GET_LIST_CONCEPTS);
+  }
+
+  async getConceptsInferredFromList(concepts) {
+    logger.debug('Getting list concepts');
+    return this.session.run(QUERY_GET_CONCEPTS_INFERRED_FROM_LIST, {
+      concepts
+    });
   }
 
   async checkExistsResource(resourceType, resourceId) {
