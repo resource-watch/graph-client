@@ -77,12 +77,12 @@ class GraphRouter {
     }
     ctx.assert(concepts, 'Concepts is required');
     logger.info('Getting concepts inferred ', concepts);
-    ctx.body = await neo4jService.conceptsInferred(concepts);
+    ctx.body = await neo4jService.getConceptsInferredFromList(concepts);
   }
 
   static async listConcepts(ctx) {
     logger.info('Getting list concepts ');
-    ctx.body = await neo4jService.listConcepts();
+    ctx.body = await neo4jService.getListConcepts();
   }
 
   static async querySearchDatasets(ctx) {
