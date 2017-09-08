@@ -75,14 +75,41 @@ class GraphRouter {
     } else if (ctx.request.body) {
       concepts = ctx.request.body.concepts;
     }
-    ctx.assert(concepts, 'Concepts is required');
+    ctx.assert(concepts, 400, 'Concepts is required');
     logger.info('Getting concepts inferred ', concepts);
-    ctx.body = await neo4jService.getConceptsInferredFromList(concepts);
+
+    const records = await neo4jService.getConceptsInferredFromList(concepts);
+    let data = [];
+    if (records) {
+      data = records.map((c) => {
+        return {
+          id: c._fields[0],
+          label: c._fields[1],
+          synonyms: c._fields[2]
+        };
+      });
+    }
+    ctx.body = {
+      data
+    };
   }
 
   static async listConcepts(ctx) {
     logger.info('Getting list concepts ');
-    ctx.body = await neo4jService.getListConcepts();
+    const records = await neo4jService.getListConcepts();
+    let data = [];
+    if (records) {
+      data = records.map((c) => {
+        return {
+          id: c._fields[0],
+          label: c._fields[1],
+          synonyms: c._fields[2]
+        };
+      });
+    }
+    ctx.body = {
+      data
+    };
   }
 
   static async querySearchDatasets(ctx) {
