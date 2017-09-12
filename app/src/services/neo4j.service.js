@@ -132,39 +132,38 @@ class Neo4JService {
 
   constructor() {
     logger.info('Connecting to neo4j');
-    let driver = null;
+    
     if (config.get('neo4j.password') === null || config.get('neo4j.user') === null) {
-      driver = neo4j.driver(NEO4J_URI);
+      this.driver = neo4j.driver(NEO4J_URI);
     } else {
-      driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(config.get('neo4j.user'), config.get('neo4j.password')));
+      this.driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(config.get('neo4j.user'), config.get('neo4j.password')));
     }
-    this.session = driver.session();
+    
   }
 
-  async query(query) {
+  async run(query, params) {
     logger.info('Doing query ONLY READ ', query);
-
-    const readTxResultPromise = this.session.readTransaction((transaction) => {
-      return transaction.run(query);
-    });
-    return readTxResultPromise;
+    const session = this.driver.session();
+    const data = await session.run(query, params);
+    session.close();
+    return data;
   }
 
   async getListConcepts() {
     logger.debug('Getting list concepts');
-    return this.session.run(QUERY_GET_LIST_CONCEPTS);
+    return this.run(QUERY_GET_LIST_CONCEPTS);
   }
 
   async getConceptsInferredFromList(concepts) {
     logger.debug('Getting list concepts');
-    return this.session.run(QUERY_GET_CONCEPTS_INFERRED_FROM_LIST, {
+    return this.run(QUERY_GET_CONCEPTS_INFERRED_FROM_LIST, {
       concepts
     });
   }
 
   async checkExistsResource(resourceType, resourceId) {
     logger.debug('Checking if exist resource with type ', resourceType, ' and id ', resourceId);
-    return this.session.run(CHECK_EXISTS_RESOURCE.replace('{resourceType}', resourceType), {
+    return this.run(CHECK_EXISTS_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId
     });
   }
@@ -173,7 +172,7 @@ class Neo4JService {
     logger.debug('Creating relations with concepts, Type ', resourceType, ' and id ', resourceId, 'and concepts', concepts);
     for (let i = 0, length = concepts.length; i < length; i++) {
       logger.debug(CREATE_RELATION.replace('{resourceType}', resourceType));
-      await this.session.run(CREATE_RELATION.replace('{resourceType}', resourceType), {
+      await this.run(CREATE_RELATION.replace('{resourceType}', resourceType), {
         resourceId,
         label: concepts[i]
       });
@@ -184,16 +183,16 @@ class Neo4JService {
     
     logger.debug('Creating favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
     logger.debug('Checking if exist user');
-    const users = await this.session.run(CHECK_EXISTS_USER, {
+    const users = await this.run(CHECK_EXISTS_USER, {
       id: userId
     });
     if (!users.records || users.records.length === 0) {
       logger.debug('Creating user node');
-      await this.session.run(CREATE_USER, {
+      await this.run(CREATE_USER, {
         id: userId
       });
     }
-    await this.session.run(CREATE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
+    await this.run(CREATE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId,
       userId
     });
@@ -203,7 +202,7 @@ class Neo4JService {
     
     logger.debug('deleting favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
     
-    await this.session.run(DELETE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
+    await this.run(DELETE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId,
       userId
     });
@@ -211,35 +210,35 @@ class Neo4JService {
 
   async createDatasetNode(id) {
     logger.debug('Creating dataset with id ', id);
-    return this.session.run(CREATE_DATASET, {
+    return this.run(CREATE_DATASET, {
       id
     });
   }
 
   async createUserNode(id) {
     logger.debug('Creating user with id ', id);
-    return this.session.run(CREATE_USER, {
+    return this.run(CREATE_USER, {
       id
     });
   }
 
   async deleteDatasetNode(id) {
     logger.debug('Deleting dataset with id ', id);
-    return this.session.run(DELETE_DATASET_NODE, {
+    return this.run(DELETE_DATASET_NODE, {
       id
     });
   }
 
   async checkExistsDataset(id) {
     logger.debug('Checking if exists dataset with id ', id);
-    return this.session.run(CHECK_EXISTS_DATASET, {
+    return this.run(CHECK_EXISTS_DATASET, {
       id
     });
   }
 
   async createWidgetNodeAndRelation(idDataset, idWidget) {
     logger.debug('Creating widget and relation with id ', idWidget, '; id dataset', idDataset);
-    return this.session.run(CREATE_WIDGET_AND_RELATION, {
+    return this.run(CREATE_WIDGET_AND_RELATION, {
       idWidget,
       idDataset
     });
@@ -247,7 +246,7 @@ class Neo4JService {
 
   async createUserNodeAndRelation(idDataset, idWidget) {
     logger.debug('Creating user and relation with id ', idWidget, '; id dataset', idDataset);
-    return this.session.run(CREATE_WIDGET_AND_RELATION, {
+    return this.run(CREATE_WIDGET_AND_RELATION, {
       idWidget,
       idDataset
     });
@@ -255,14 +254,14 @@ class Neo4JService {
 
   async deleteWidgetNodeAndRelation(id) {
     logger.debug('Deleting widget and relation with id ', id);
-    return this.session.run(DELETE_WIDGET_NODE, {
+    return this.run(DELETE_WIDGET_NODE, {
       id
     });
   }
 
   async createLayerNodeAndRelation(idDataset, idLayer) {
     logger.debug('Creating layer and relation with id ', idLayer, '; id dataset', idDataset);
-    return this.session.run(CREATE_LAYER_AND_RELATION, {
+    return this.run(CREATE_LAYER_AND_RELATION, {
       idLayer,
       idDataset
     });
@@ -270,14 +269,14 @@ class Neo4JService {
 
   async deleteLayerNodeAndRelation(id) {
     logger.debug('Deleting layer and relation with id ', id);
-    return this.session.run(DELETE_LAYER_NODE, {
+    return this.run(DELETE_LAYER_NODE, {
       id
     });
   }
 
   async createMetadataNodeAndRelation(resourceType, resourceId, idMetadata) {
     logger.debug('Creating metadata and relation with id-metadata ', idMetadata, '; resourceType ', resourceType, 'id dataset', resourceId);
-    return this.session.run(CREATE_METADATA_AND_RELATION.replace('{resourceType}', resourceType), {
+    return this.run(CREATE_METADATA_AND_RELATION.replace('{resourceType}', resourceType), {
       idMetadata,
       resourceId
     });
@@ -285,21 +284,21 @@ class Neo4JService {
 
   async deleteMetadata(id) {
     logger.debug('Deleting metadata and relation with id ', id);
-    return this.session.run(DELETE_METADATA_NODE, {
+    return this.run(DELETE_METADATA_NODE, {
       id
     });
   }
 
   async querySimilarDatasets(dataset) {
     logger.debug('Obtaining similar datasets of ', dataset);
-    return this.session.run(QUERY_SIMILAR_DATASET, {
+    return this.run(QUERY_SIMILAR_DATASET, {
       dataset
     });
   }
 
   async querySimilarDatasetsIncludingDescendent(dataset) {
     logger.debug('Obtaining similar datasets including descendent of ', dataset);
-    return this.session.run(QUERY_SIMILAR_DATASET_WITH_DESCENDENT, {
+    return this.run(QUERY_SIMILAR_DATASET_WITH_DESCENDENT, {
       dataset
     });
   }
@@ -325,7 +324,7 @@ class Neo4JService {
     if (query) {
       logger.debug('query', query);
       logger.debug('params', params);
-      return this.session.run(query, params);
+      return this.run(query, params);
     } 
     return null;
   }
