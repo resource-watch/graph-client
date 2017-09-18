@@ -54,12 +54,12 @@ const DELETE_RELATION_FAVOURITE_AND_RESOURCE = `
 
 
 const DELETE_WIDGET_NODE = `
-  MATCH (n)-[:BELONGS_TO*0..]->(widget:WIDGET{id:{id}}) 
+  MATCH (n)-[:BELONGS_TO*0..]->(widget:WIDGET{id:{id}})
   DETACH DELETE widget, n
 `;
 
 const DELETE_LAYER_NODE = `
-  MATCH (n)-[:BELONGS_TO*0..]->(layer:LAYER{id:{id}}) 
+  MATCH (n)-[:BELONGS_TO*0..]->(layer:LAYER{id:{id}})
   DETACH DELETE layer, n
 `;
 
@@ -90,21 +90,21 @@ const QUERY_SEARCH_PARTS= [`
 MATCH (c:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE c.id IN {concepts1}
 WITH COLLECT(d.id) AS datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE (c.id IN {concepts1})
 WITH COLLECT(DISTINCT d.id) + datasets AS datasets
 `, `
 MATCH (c:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE c.id IN {concepts2} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE (c.id IN {concepts2}) AND d.id IN datasets
 WITH COLLECT(DISTINCT d.id) + tempSet AS datasets
 `, `
 MATCH (c:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE c.id IN {concepts3} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
 WHERE (c.id IN {concepts3}) AND d.id IN datasets
 WITH COLLECT(DISTINCT d.id) + tempSet AS datasets
 `];
@@ -132,13 +132,13 @@ class Neo4JService {
 
   constructor() {
     logger.info('Connecting to neo4j');
-    
+
     if (config.get('neo4j.password') === null || config.get('neo4j.user') === null) {
       this.driver = neo4j.driver(NEO4J_URI);
     } else {
       this.driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(config.get('neo4j.user'), config.get('neo4j.password')));
     }
-    
+
   }
 
   async run(query, params) {
@@ -180,7 +180,7 @@ class Neo4JService {
   }
 
   async createFavouriteRelationWithResource(userId, resourceType, resourceId) {
-    
+
     logger.debug('Creating favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
     logger.debug('Checking if exist user');
     const users = await this.run(CHECK_EXISTS_USER, {
@@ -199,9 +199,9 @@ class Neo4JService {
   }
 
   async deleteFavouriteRelationWithResource(userId, resourceType, resourceId) {
-    
+
     logger.debug('deleting favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
-    
+
     await this.run(DELETE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId,
       userId
@@ -325,7 +325,7 @@ class Neo4JService {
       logger.debug('query', query);
       logger.debug('params', params);
       return this.run(query, params);
-    } 
+    }
     return null;
   }
 
