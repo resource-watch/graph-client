@@ -120,7 +120,7 @@ RETURN c.id, c.label, c.synonyms
 `;
 
 const QUERY_GET_CONCEPTS_INFERRED_FROM_LIST = `
-MATCH (c:CONCEPT)-[*]->(c2:CONCEPT)
+MATCH (c:CONCEPT)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*]->(c2:CONCEPT)
 WHERE c.id IN {concepts}
 WITH collect(DISTINCT c.id) + collect(DISTINCT c2.id) as results
 MATCH (c:CONCEPT)
