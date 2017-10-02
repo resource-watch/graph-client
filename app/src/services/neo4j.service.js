@@ -315,15 +315,13 @@ class Neo4JService {
       for (let i = 0, length = concepts.length; i < length; i++) {
         query += QUERY_SEARCH_PARTS[i];
 
-        params[`concepts${i+1}`] = concepts[i]; //.map(el => `'${el}'`).join(',');
+        params[`concepts${i+1}`] = concepts[i];
       }
       query += QUERY_SEARCH_FINAL;
     }
     logger.info('query', query);
     logger.info('params', params);
     if (query) {
-      logger.debug('query', query);
-      logger.debug('params', params);
       return this.run(query, params);
     }
     return null;
