@@ -1,6 +1,7 @@
 const logger = require('logger');
 const Router = require('koa-router');
 const neo4jService = require('services/neo4j.service');
+const datasetService = require('services/dataset.service');
 const qs = require('qs');
 
 
@@ -122,36 +123,64 @@ class GraphRouter {
     }
     logger.info('Searching dataset with concepts', concepts);
     const results = await neo4jService.querySearchDatasets(concepts);
+
+    let datasetIds = [];
+    const data = results.records ? results.records.map(el => {
+      if (el._fields[0].length > 0) {
+        datasetIds = datasetIds.concat(el._fields[0]);
+      }
+      return el._fields[0];
+    }) : [];
+    let result = [];
+    if (datasetIds.length > 0) {
+      result = await datasetService.checkDatasets(datasetIds, ctx.query);
+    } else {
+      result = [];
+    }
     ctx.body = {
-      data: results.records ? results.records.map(el => el._fields[0]) : []
+      data: result
     };
   }
 
   static async querySimilarDatasets(ctx) {
     logger.info('Obtaining similar datasets', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasets(ctx.params.dataset);
+    const datasetIds = [];
+    const data = results && results.records ? results.records.slice(0, ctx.query.limit || 3).map((el) => {
+      datasetIds.push(el._fields[0]);
+      return {
+        dataset: el._fields[0],
+        concepts: el._fields[1],
+        numberOfOcurrences: el._fieldLookup.dataset_tags
+      };
+    }) : [];
+    let result = [];
+    if (datasetIds.length > 0) {
+      result = await datasetService.checkDatasets(datasetIds, ctx.query);
+    }
     ctx.body = {
-      data: results && results.records ? results.records.slice(0, ctx.query.limit || 3).map((el) => {
-        return {
-          dataset: el._fields[0],
-          concepts: el._fields[1],
-          numberOfOcurrences: el._fieldLookup.shared_concepts
-        };
-      }) : []
+      data: data.filter((el) => result.indexOf(el.dataset) >= 0)
     };
   }
 
   static async querySimilarDatasetsIncludingDescendent(ctx) {
     logger.info('Obtaining similar datasets with descendent', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasetsIncludingDescendent(ctx.params.dataset);
+    const datasetIds = [];
+    const data = results && results.records ? results.records.slice(0, ctx.query.limit || 3).map((el) => {
+      datasetIds.push(el._fields[0]);
+      return {
+        dataset: el._fields[0],
+        concepts: el._fields[1],
+        numberOfOcurrences: el._fieldLookup.dataset_tags
+      };
+    }) : [];
+    let result = [];
+    if (datasetIds.length > 0) {
+      result = await datasetService.checkDatasets(datasetIds, ctx.query);
+    }
     ctx.body = {
-      data: results && results.records ? results.records.slice(0, ctx.query.limit || 3).map((el) => {
-        return {
-          dataset: el._fields[0],
-          concepts: el._fields[1],
-          numberOfOcurrences: el._fieldLookup.dataset_tags
-        };
-      }) : []
+      data: data.filter((el) => result.indexOf(el.dataset) >= 0)
     };
   }
 
