@@ -5,32 +5,17 @@ class DatasetService {
 
   static async checkDatasets(datasets, query) {
     logger.info('Checking published and other fields of dataset', datasets);
-    let queryParams = '';
-    let url = '/dataset/find-by-ids';
-    if (query.published) {
-      if (queryParams) {
-        queryParams += '&';
-      }
-      queryParams += `published=${query.published}`;
+    if (query) {
+      delete query.loggedUser;
     }
-
-    if (query.env) {
-      if (queryParams) {
-        queryParams += '&';
-      }
-      queryParams += `env=${query.env}`;
-    }
-    if (queryParams !== '') {
-      url += `?${queryParams}`;
-    }
-    
     const result = await ctRegisterMicroservice.requestToMicroservice({
-      uri: url,
+      uri: '/dataset/find-by-ids',
       method: 'POST',
       json: true,
       body: {
         ids: datasets
-      }
+      },
+      qs: query
     });
     logger.debug('Returning ', result);
     if (result && result.data) {
