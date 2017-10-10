@@ -146,7 +146,7 @@ class GraphRouter {
     logger.info('Obtaining similar datasets', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasets(ctx.params.dataset);
     const datasetIds = [];
-    const data = results && results.records ? results.records.slice(0, ctx.query.limit || 3).map((el) => {
+    const data = results && results.records ? results.records.map((el) => {
       datasetIds.push(el._fields[0]);
       return {
         dataset: el._fields[0],
@@ -159,7 +159,7 @@ class GraphRouter {
       result = await datasetService.checkDatasets(datasetIds, ctx.query);
     }
     ctx.body = {
-      data: data.filter((el) => result.indexOf(el.dataset) >= 0)
+      data: data.filter((el) => result.indexOf(el.dataset) >= 0).slice(0, ctx.query.limit || 3)
     };
   }
 
@@ -167,7 +167,7 @@ class GraphRouter {
     logger.info('Obtaining similar datasets with descendent', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasetsIncludingDescendent(ctx.params.dataset);
     const datasetIds = [];
-    const data = results && results.records ? results.records.slice(0, ctx.query.limit || 3).map((el) => {
+    const data = results && results.records ? results.records.map((el) => {
       datasetIds.push(el._fields[0]);
       return {
         dataset: el._fields[0],
@@ -180,7 +180,7 @@ class GraphRouter {
       result = await datasetService.checkDatasets(datasetIds, ctx.query);
     }
     ctx.body = {
-      data: data.filter((el) => result.indexOf(el.dataset) >= 0)
+      data: data.filter((el) => result.indexOf(el.dataset) >= 0).slice(0, ctx.query.limit || 3)
     };
   }
 
