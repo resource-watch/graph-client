@@ -124,6 +124,20 @@
 			"path": "/api/v1/graph/query/concepts-inferred"
 		}
 	}, {
+		"path": "/v1/graph/query/concepts-ancestors",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/concepts-ancestors"
+		}
+	}, {
+		"path": "/v1/graph/query/concepts-ancestors",
+		"method": "POST",
+		"redirect": {
+			"method": "POST",
+			"path": "/api/v1/graph/query/concepts-ancestors"
+		}
+	}, {
 		"path": "/v1/graph/query/similar-dataset-including-descendent/:dataset",
 		"method": "GET",
 		"redirect": {

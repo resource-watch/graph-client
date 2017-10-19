@@ -116,16 +116,25 @@ RETURN DISTINCT datasets
 
 const QUERY_GET_LIST_CONCEPTS = `
 MATCH (c:CONCEPT)
-RETURN c.id, c.label, c.synonyms
+RETURN c.id, c.label, c.synonyms, labels(c) as labels
 `;
 
 const QUERY_GET_CONCEPTS_INFERRED_FROM_LIST = `
-MATCH (c:CONCEPT)-[*]->(c2:CONCEPT)
+MATCH (c:CONCEPT)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*]->(c2:CONCEPT)
 WHERE c.id IN {concepts}
 WITH collect(DISTINCT c.id) + collect(DISTINCT c2.id) as results
 MATCH (c:CONCEPT)
 WHERE c.id IN results
-RETURN c.id, c.label, c.synonyms
+RETURN c.id, c.label, c.synonyms, labels(c) as labels
+`;
+
+const QUERY_GET_CONCEPTS_ANCESTORS_FROM_LIST = `
+MATCH (c:CONCEPT)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF]->(c2:CONCEPT)
+WHERE c.id IN {concepts}
+WITH collect(DISTINCT c2.id) as results
+MATCH (c:CONCEPT)
+WHERE c.id IN results
+RETURN c.id, c.label, c.synonyms, labels(c) as labels
 `;
 
 class Neo4JService {
@@ -157,6 +166,13 @@ class Neo4JService {
   async getConceptsInferredFromList(concepts) {
     logger.debug('Getting list concepts');
     return this.run(QUERY_GET_CONCEPTS_INFERRED_FROM_LIST, {
+      concepts
+    });
+  }
+
+  async getConceptsAncestorsFromList(concepts) {
+    logger.debug('Getting list concepts');
+    return this.run(QUERY_GET_CONCEPTS_ANCESTORS_FROM_LIST, {
       concepts
     });
   }
