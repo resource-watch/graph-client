@@ -86,7 +86,35 @@ class GraphRouter {
         return {
           id: c._fields[0],
           label: c._fields[1],
-          synonyms: c._fields[2]
+          synonyms: c._fields[2],
+          labels: c._fields[3]
+        };
+      });
+    }
+    ctx.body = {
+      data
+    };
+  }
+
+  static async conceptsAncestors(ctx) {
+    let concepts = null;
+    if (ctx.query.concepts) {
+      concepts = ctx.query.concepts.split(',').map(c => c.trim());
+    } else if (ctx.request.body) {
+      concepts = ctx.request.body.concepts;
+    }
+    ctx.assert(concepts, 400, 'Concepts is required');
+    logger.info('Getting concepts inferred ', concepts);
+
+    const response = await neo4jService.getConceptsAncestorsFromList(concepts);
+    let data = [];
+    if (response) {
+      data = response.records.map((c) => {
+        return {
+          id: c._fields[0],
+          label: c._fields[1],
+          synonyms: c._fields[2],
+          labels: c._fields[3]
         };
       });
     }
@@ -104,7 +132,8 @@ class GraphRouter {
         return {
           id: c._fields[0],
           label: c._fields[1],
-          synonyms: c._fields[2]
+          synonyms: c._fields[2],
+          labels: c._fields[3]
         };
       });
     }
@@ -223,6 +252,10 @@ async function checkExistsResource(ctx, next) {
 router.get('/query/list-concepts', GraphRouter.listConcepts);
 router.get('/query/concepts-inferred', GraphRouter.conceptsInferred);
 router.post('/query/concepts-inferred', GraphRouter.conceptsInferred);
+router.get('/query/concepts-ancestors', GraphRouter.conceptsAncestors);
+router.post('/query/concepts-ancestors', GraphRouter.conceptsAncestors);
+
+
 router.get('/query/similar-dataset/:dataset', GraphRouter.querySimilarDatasets);
 router.get('/query/similar-dataset-including-descendent/:dataset', GraphRouter.querySimilarDatasetsIncludingDescendent);
 router.get('/query/search-datasets', GraphRouter.querySearchDatasets);
