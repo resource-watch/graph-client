@@ -69,16 +69,16 @@ const DELETE_METADATA_NODE = `
 `;
 
 const QUERY_SIMILAR_DATASET = `
-MATCH p=(d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:CONCEPT)<-[:TAGGED_WITH]-(d2:DATASET)
-WITH count(c) AS number_of_shared_concepts, COLLECT(c.id) AS shared_concepts, d2
+MATCH p=(d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:TOPIC)<-[:TAGGED_WITH]-(d2:DATASET)
+WITH length(COLLECT(c.id)) AS number_of_shared_concepts, COLLECT(c.id) AS shared_concepts, d2
 RETURN d2.id, shared_concepts, number_of_shared_concepts
 ORDER BY number_of_shared_concepts DESC
 `;
 
 const QUERY_SIMILAR_DATASET_WITH_DESCENDENT = `
-MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:CONCEPT)
+MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:TOPIC)
 WITH COLLECT(c.id) AS main_tags, d
-MATCH (d2:DATASET)-[:TAGGED_WITH]->(c1:CONCEPT)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]->(c2:CONCEPT)
+MATCH (d2:DATASET)-[:TAGGED_WITH]->(c1:TOPIC)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]->(c2:TOPIC)
 WHERE (c1.id IN main_tags OR c2.id IN main_tags) AND d2.id <> d.id
 WITH COLLECT(DISTINCT c1.id) AS dataset_tags, d2.id AS dataset
 WITH size(dataset_tags) AS number_of_ocurrences, dataset_tags, dataset
