@@ -69,6 +69,23 @@ class GraphRouter {
     ctx.body = await neo4jService.deleteFavouriteRelationWithResource(ctx.params.userId, ctx.params.resourceType, ctx.params.idResource);
   }
 
+  static async mostLikedDatasets(ctx) {
+    logger.info('Getting most liked datasets ');
+    const response = await neo4jService.mostLikedDatasets();
+    let data = [];
+    if (response) {
+      data = response.records.map((c) => {
+        return {
+          id: c._fields[0],
+          count: c._fields[1]
+        };
+      });
+    }
+    ctx.body = {
+      data
+    };
+  }
+
   static async conceptsInferred(ctx) {
     let concepts = null;
     if (ctx.query.concepts) {
@@ -259,6 +276,7 @@ router.post('/query/concepts-ancestors', GraphRouter.conceptsAncestors);
 router.get('/query/similar-dataset/:dataset', GraphRouter.querySimilarDatasets);
 router.get('/query/similar-dataset-including-descendent/:dataset', GraphRouter.querySimilarDatasetsIncludingDescendent);
 router.get('/query/search-datasets', GraphRouter.querySearchDatasets);
+router.get('/query/most-liked-datasets', GraphRouter.mostLikedDatasets);
 router.post('/query/search-datasets', GraphRouter.querySearchDatasets);
 
 

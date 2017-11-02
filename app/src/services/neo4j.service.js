@@ -69,17 +69,17 @@ const DELETE_METADATA_NODE = `
 `;
 
 const QUERY_SIMILAR_DATASET = `
-MATCH p=(d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:TOPIC)<-[:TAGGED_WITH]-(d2:DATASET)
-WITH length(COLLECT(c.id)) AS number_of_shared_concepts, COLLECT(c.id) AS shared_concepts, d2
+MATCH p=(d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:CONCEPT)<-[:TAGGED_WITH]-(d2:DATASET)
+WITH count(c) AS number_of_shared_concepts, COLLECT(c.id) AS shared_concepts, d2
 RETURN d2.id, shared_concepts, number_of_shared_concepts
 ORDER BY number_of_shared_concepts DESC
 `;
 
 const QUERY_SIMILAR_DATASET_WITH_DESCENDENT = `
-MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:TOPIC)
-WITH COLLECT(c.id) AS main_tags, d
-MATCH (d2:DATASET)-[:TAGGED_WITH]->(c1:TOPIC)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]->(c2:TOPIC)
-WHERE (c1.id IN main_tags OR c2.id IN main_tags) AND d2.id <> d.id
+MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:CONCEPT)
+WITH COLLECT(c.id) AS main_tags
+MATCH (d2:DATASET)-[:TAGGED_WITH]->(c1:CONCEPT)-[*]->(c2:CONCEPT)
+WHERE c1.id IN main_tags OR c2.id IN main_tags
 WITH COLLECT(DISTINCT c1.id) AS dataset_tags, d2.id AS dataset
 WITH size(dataset_tags) AS number_of_ocurrences, dataset_tags, dataset
 RETURN dataset, dataset_tags, number_of_ocurrences
@@ -116,7 +116,7 @@ RETURN DISTINCT datasets
 
 const QUERY_GET_LIST_CONCEPTS = `
 MATCH (c:CONCEPT)
-RETURN c.id, c.label, c.synonyms, labels(c) as labels
+RETURN c.id, c.label, c.synonyms
 `;
 
 const QUERY_GET_CONCEPTS_INFERRED_FROM_LIST = `
@@ -125,16 +125,13 @@ WHERE c.id IN {concepts}
 WITH collect(DISTINCT c.id) + collect(DISTINCT c2.id) as results
 MATCH (c:CONCEPT)
 WHERE c.id IN results
-RETURN c.id, c.label, c.synonyms, labels(c) as labels
+RETURN c.id, c.label, c.synonyms
 `;
 
-const QUERY_GET_CONCEPTS_ANCESTORS_FROM_LIST = `
-MATCH (c:CONCEPT)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF]->(c2:CONCEPT)
-WHERE c.id IN {concepts}
-WITH collect(DISTINCT c2.id) as results
-MATCH (c:CONCEPT)
-WHERE c.id IN results
-RETURN c.id, c.label, c.synonyms, labels(c) as labels
+const MOST_LIKED_DATASETS = `
+MATCH (u:USER)-[:FAVOURITE]->(d:DATASET)
+RETURN d.id, COUNT(d) AS number_of_favorites
+ORDER BY number_of_favorites DESC
 `;
 
 class Neo4JService {
@@ -163,16 +160,14 @@ class Neo4JService {
     return this.run(QUERY_GET_LIST_CONCEPTS);
   }
 
+  async mostLikedDatasets() {
+    logger.debug('Getting most liked datasets');
+    return this.run(MOST_LIKED_DATASETS);
+  }
+
   async getConceptsInferredFromList(concepts) {
     logger.debug('Getting list concepts');
     return this.run(QUERY_GET_CONCEPTS_INFERRED_FROM_LIST, {
-      concepts
-    });
-  }
-
-  async getConceptsAncestorsFromList(concepts) {
-    logger.debug('Getting list concepts');
-    return this.run(QUERY_GET_CONCEPTS_ANCESTORS_FROM_LIST, {
       concepts
     });
   }
@@ -331,13 +326,15 @@ class Neo4JService {
       for (let i = 0, length = concepts.length; i < length; i++) {
         query += QUERY_SEARCH_PARTS[i];
 
-        params[`concepts${i+1}`] = concepts[i];
+        params[`concepts${i+1}`] = concepts[i]; //.map(el => `'${el}'`).join(',');
       }
       query += QUERY_SEARCH_FINAL;
     }
     logger.info('query', query);
     logger.info('params', params);
     if (query) {
+      logger.debug('query', query);
+      logger.debug('params', params);
       return this.run(query, params);
     }
     return null;
