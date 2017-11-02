@@ -152,6 +152,13 @@
 			"path": "/api/v1/graph/query/search-datasets"
 		}
 	}, {
+		"path": "/v1/graph/query/most-liked-datasets",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/most-liked-datasets"
+		}
+	}, {
 		"path": "/v1/graph/query/search-datasets",
 		"method": "POST",
 		"redirect": {
