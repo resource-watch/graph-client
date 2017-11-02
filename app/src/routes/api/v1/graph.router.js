@@ -1,6 +1,7 @@
 const logger = require('logger');
 const Router = require('koa-router');
 const neo4jService = require('services/neo4j.service');
+const datasetService = require('services/dataset.service');
 const qs = require('qs');
 
 
@@ -85,7 +86,35 @@ class GraphRouter {
         return {
           id: c._fields[0],
           label: c._fields[1],
-          synonyms: c._fields[2]
+          synonyms: c._fields[2],
+          labels: c._fields[3]
+        };
+      });
+    }
+    ctx.body = {
+      data
+    };
+  }
+
+  static async conceptsAncestors(ctx) {
+    let concepts = null;
+    if (ctx.query.concepts) {
+      concepts = ctx.query.concepts.split(',').map(c => c.trim());
+    } else if (ctx.request.body) {
+      concepts = ctx.request.body.concepts;
+    }
+    ctx.assert(concepts, 400, 'Concepts is required');
+    logger.info('Getting concepts inferred ', concepts);
+
+    const response = await neo4jService.getConceptsAncestorsFromList(concepts);
+    let data = [];
+    if (response) {
+      data = response.records.map((c) => {
+        return {
+          id: c._fields[0],
+          label: c._fields[1],
+          synonyms: c._fields[2],
+          labels: c._fields[3]
         };
       });
     }
@@ -103,7 +132,8 @@ class GraphRouter {
         return {
           id: c._fields[0],
           label: c._fields[1],
-          synonyms: c._fields[2]
+          synonyms: c._fields[2],
+          labels: c._fields[3]
         };
       });
     }
@@ -122,36 +152,64 @@ class GraphRouter {
     }
     logger.info('Searching dataset with concepts', concepts);
     const results = await neo4jService.querySearchDatasets(concepts);
+
+    let datasetIds = [];
+    const data = results.records ? results.records.map(el => {
+      if (el._fields[0].length > 0) {
+        datasetIds = datasetIds.concat(el._fields[0]);
+      }
+      return el._fields[0];
+    }) : [];
+    let result = [];
+    if (datasetIds.length > 0) {
+      result = await datasetService.checkDatasets(datasetIds, ctx.query);
+    } else {
+      result = [];
+    }
     ctx.body = {
-      data: results.records ? results.records.map(el => el._fields[0]) : []
+      data: result
     };
   }
 
   static async querySimilarDatasets(ctx) {
     logger.info('Obtaining similar datasets', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasets(ctx.params.dataset);
+    const datasetIds = [];
+    const data = results && results.records ? results.records.map((el) => {
+      datasetIds.push(el._fields[0]);
+      return {
+        dataset: el._fields[0],
+        concepts: el._fields[1],
+        numberOfOcurrences: el._fieldLookup.dataset_tags
+      };
+    }) : [];
+    let result = [];
+    if (datasetIds.length > 0) {
+      result = await datasetService.checkDatasets(datasetIds, ctx.query);
+    }
     ctx.body = {
-      data: results && results.records ? results.records.slice(0, ctx.query.limit || 3).map((el) => {
-        return {
-          dataset: el._fields[0],
-          concepts: el._fields[1],
-          numberOfOcurrences: el._fieldLookup.shared_concepts
-        };
-      }) : []
+      data: data.filter((el) => result.indexOf(el.dataset) >= 0).slice(0, ctx.query.limit || 3)
     };
   }
 
   static async querySimilarDatasetsIncludingDescendent(ctx) {
     logger.info('Obtaining similar datasets with descendent', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasetsIncludingDescendent(ctx.params.dataset);
+    const datasetIds = [];
+    const data = results && results.records ? results.records.map((el) => {
+      datasetIds.push(el._fields[0]);
+      return {
+        dataset: el._fields[0],
+        concepts: el._fields[1],
+        numberOfOcurrences: el._fieldLookup.dataset_tags
+      };
+    }) : [];
+    let result = [];
+    if (datasetIds.length > 0) {
+      result = await datasetService.checkDatasets(datasetIds, ctx.query);
+    }
     ctx.body = {
-      data: results && results.records ? results.records.slice(0, ctx.query.limit || 3).map((el) => {
-        return {
-          dataset: el._fields[0],
-          concepts: el._fields[1],
-          numberOfOcurrences: el._fieldLookup.dataset_tags
-        };
-      }) : []
+      data: data.filter((el) => result.indexOf(el.dataset) >= 0).slice(0, ctx.query.limit || 3)
     };
   }
 
@@ -194,6 +252,10 @@ async function checkExistsResource(ctx, next) {
 router.get('/query/list-concepts', GraphRouter.listConcepts);
 router.get('/query/concepts-inferred', GraphRouter.conceptsInferred);
 router.post('/query/concepts-inferred', GraphRouter.conceptsInferred);
+router.get('/query/concepts-ancestors', GraphRouter.conceptsAncestors);
+router.post('/query/concepts-ancestors', GraphRouter.conceptsAncestors);
+
+
 router.get('/query/similar-dataset/:dataset', GraphRouter.querySimilarDatasets);
 router.get('/query/similar-dataset-including-descendent/:dataset', GraphRouter.querySimilarDatasetsIncludingDescendent);
 router.get('/query/search-datasets', GraphRouter.querySearchDatasets);
