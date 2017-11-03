@@ -5,7 +5,7 @@ const neo4j = require('neo4j-driver').v1;
 const NEO4J_URI = process.env.NEO4J_URI || `bolt://${config.get('neo4j.host')}:${config.get('neo4j.port')}`;
 
 
-const CREATE_DATASET = `MERGE (dataset:DATASET {id: {id}}) RETURN dataset`;
+const CREATE_DATASET = `MERGE (dataset:DATASET {id: {id}, views: 0}) RETURN dataset`;
 const CHECK_EXISTS_DATASET = `MATCH (dataset:DATASET {id: {id}}) RETURN dataset`;
 const CHECK_EXISTS_RESOURCE = `MATCH (n:{resourceType} {id: {resourceId}}) RETURN n`;
 const CREATE_USER = `MERGE (user:USER {id: {id}}) RETURN user`;
@@ -134,6 +134,29 @@ RETURN d.id, COUNT(d) AS number_of_favorites
 ORDER BY number_of_favorites DESC
 `;
 
+const INCREMENT_DATASET = `
+MATCH (dataset:DATASET {id: {dataset}})
+SET dataset.views = coalesce(dataset.views, 0) + 1
+`;
+
+const VIEWED_BY_USER = `
+MERGE (user:USER{id:{userId}})-[r:VIEWED]->(dataset:DATASET {id: {dataset}})
+ON MATCH SET r.views = coalesce(r.views, 0) + 1
+ON CREATE SET r.views = 1
+`;
+
+const QUERY_MOST_VIEWED = `
+MATCH (d:DATASET)
+RETURN d.id, d.views
+ORDER BY d.views DESC
+`;
+
+const QUERY_MOST_VIEWED_BY_USER = `
+MATCH (d:DATASET)<-[v:VIEWED]-(u:USER {id: {userId}})
+RETURN d.id, v.views
+ORDER BY v.views DESC
+`;
+
 class Neo4JService {
 
   constructor() {
@@ -145,6 +168,21 @@ class Neo4JService {
       this.driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(config.get('neo4j.user'), config.get('neo4j.password')));
     }
 
+  }
+
+  async visitedDataset(dataset, userId) {
+    logger.info(`Visited dataset ${dataset} by user ${userId}`);
+    if (dataset) {
+      await this.run(INCREMENT_DATASET, {
+        dataset
+      });
+    }
+    if (dataset && userId) {
+      await this.run(VIEWED_BY_USER, {
+        dataset,
+        userId
+      });
+    }
   }
 
   async run(query, params) {
@@ -312,6 +350,16 @@ class Neo4JService {
     return this.run(QUERY_SIMILAR_DATASET_WITH_DESCENDENT, {
       dataset
     });
+  }
+
+  async queryMostViewed() {
+    logger.debug('Obtaining dataset most viewed ');
+    return this.run(QUERY_MOST_VIEWED);
+  }
+
+  async queryMostViewedByUser(userId) {
+    logger.debug('Obtaining dataset most viewed by user ', userId);
+    return this.run(QUERY_MOST_VIEWED_BY_USER, { userId });
   }
 
   async querySearchDatasets(concepts) {
