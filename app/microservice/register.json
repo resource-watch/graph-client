@@ -16,6 +16,14 @@
 			"path": "/api/v1/graph/dataset/:idDataset"
 		}
 	}, {
+		"path": "/v1/graph/dataset/:idDataset/visited",
+		"method": "POST",
+		"authenticated": true,
+		"redirect": {
+			"method": "POST",
+			"path": "/api/v1/graph/dataset/:idDataset/visited"
+		}
+	}, {
 		"path": "/v1/graph/widget/:idDataset/:idWidget",
 		"method": "POST",
 		"authenticated": true,
@@ -164,6 +172,21 @@
 		"redirect": {
 			"method": "POST",
 			"path": "/api/v1/graph/query/search-datasets"
+		}
+	}, {
+		"path": "/v1/graph/query/most-viewed",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/most-viewed"
+		}
+	}, {
+		"path": "/v1/graph/query/most-viewed-by-user",
+		"method": "GET",
+		"authenticated": true,
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/most-viewed-by-user"
 		}
 	}]
 }

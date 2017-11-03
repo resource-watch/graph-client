@@ -188,6 +188,66 @@ class GraphRouter {
     };
   }
 
+  static async queryMostViewed(ctx) {
+    logger.info('Returning datasets most viewed');
+    const results = await neo4jService.queryMostViewed();
+
+    const datasetIds = [];
+    const data = results.records ? results.records.map(el => {
+      datasetIds.push(el._fields[0]);
+      return {
+        dataset: el._fields[0],
+        views: el._fields[1] ? el._fields[1].low : null
+      };
+    }) : [];
+    let result = [];
+    if (datasetIds.length > 0) {
+      result = await datasetService.checkDatasets(datasetIds, ctx.query);
+    } else {
+      result = [];
+    }
+
+    ctx.body = {
+      data: data.filter((el) => result.indexOf(el.dataset) >= 0)
+    };
+    if (ctx.query.limit) {
+      ctx.body.data = ctx.body.data.slice(0, ctx.query.limit);
+    }
+  }
+
+  static async queryMostViewedByUser(ctx) {
+    logger.info('Returning datasets most viewed by user');
+    if (!ctx.query.loggedUser) {
+      ctx.throw(401, 'Not authenticaed');
+      return;
+    }
+    const user = JSON.parse(ctx.query.loggedUser);
+
+    const results = await neo4jService.queryMostViewedByUser(user.id);
+
+    const datasetIds = [];
+    const data = results.records ? results.records.map(el => {
+      datasetIds.push(el._fields[0]);
+      return {
+        dataset: el._fields[0],
+        views: el._fields[1] ? el._fields[1].low : null
+      };
+    }) : [];
+    let result = [];
+    if (datasetIds.length > 0) {
+      result = await datasetService.checkDatasets(datasetIds, ctx.query);
+    } else {
+      result = [];
+    }
+
+    ctx.body = {
+      data: data.filter((el) => result.indexOf(el.dataset) >= 0)
+    };
+    if (ctx.query.limit) {
+      ctx.body.data = ctx.body.data.slice(0, ctx.query.limit);
+    }
+  }
+
   static async querySimilarDatasets(ctx) {
     logger.info('Obtaining similar datasets', ctx.params.dataset);
     const results = await neo4jService.querySimilarDatasets(ctx.params.dataset);
@@ -228,6 +288,13 @@ class GraphRouter {
     ctx.body = {
       data: data.filter((el) => result.indexOf(el.dataset) >= 0).slice(0, ctx.query.limit || 3)
     };
+  }
+
+  static async visitedDataset(ctx) {
+    logger.info('Visited dataset');
+    const user = ctx.request.body && ctx.request.body.loggedUser;
+    await neo4jService.visitedDataset(ctx.params.id, user ? user.id : null);
+    ctx.body = {};
   }
 
 }
@@ -278,9 +345,12 @@ router.get('/query/similar-dataset-including-descendent/:dataset', GraphRouter.q
 router.get('/query/search-datasets', GraphRouter.querySearchDatasets);
 router.get('/query/most-liked-datasets', GraphRouter.mostLikedDatasets);
 router.post('/query/search-datasets', GraphRouter.querySearchDatasets);
+router.get('/query/most-viewed', GraphRouter.queryMostViewed);
+router.get('/query/most-viewed-by-user', GraphRouter.queryMostViewedByUser);
 
 
 router.post('/dataset/:id', isAuthorized, GraphRouter.createDataset);
+router.post('/dataset/:id/visited', GraphRouter.visitedDataset);
 router.post('/widget/:idDataset/:idWidget', isAuthorized, checkExistsDataset, GraphRouter.createWidgetNodeAndRelation);
 router.post('/layer/:idDataset/:idLayer', isAuthorized, checkExistsDataset, GraphRouter.createLayerNodeAndRelation);
 router.post('/metadata/:resourceType/:idResource/:idMetadata', isAuthorized, checkExistsResource, GraphRouter.createMetadataNodeAndRelation);
