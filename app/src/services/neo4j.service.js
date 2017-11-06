@@ -140,7 +140,9 @@ SET dataset.views = coalesce(dataset.views, 0) + 1
 `;
 
 const VIEWED_BY_USER = `
-MERGE (user:USER{id:{userId}})-[r:VIEWED]->(dataset:DATASET {id: {dataset}})
+MATCH (dataset:DATASET {id: {dataset}})
+MERGE (user:USER{id:{userId}})
+MERGE (user)-[r:VIEWED]->(dataset)
 ON MATCH SET r.views = coalesce(r.views, 0) + 1
 ON CREATE SET r.views = 1
 `;
