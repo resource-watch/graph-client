@@ -18,7 +18,6 @@
 	}, {
 		"path": "/v1/graph/dataset/:idDataset/visited",
 		"method": "POST",
-		"authenticated": true,
 		"redirect": {
 			"method": "POST",
 			"path": "/api/v1/graph/dataset/:idDataset/visited"
