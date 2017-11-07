@@ -116,7 +116,7 @@ RETURN DISTINCT datasets
 
 const QUERY_GET_LIST_CONCEPTS = `
 MATCH (c:CONCEPT)
-RETURN c.id, c.label, c.synonyms
+RETURN c.id, c.label, c.synonyms, labels(c) as labels
 `;
 
 const QUERY_GET_CONCEPTS_INFERRED_FROM_LIST = `
@@ -125,7 +125,7 @@ WHERE c.id IN {concepts}
 WITH collect(DISTINCT c.id) + collect(DISTINCT c2.id) as results
 MATCH (c:CONCEPT)
 WHERE c.id IN results
-RETURN c.id, c.label, c.synonyms
+RETURN c.id, c.label, c.synonyms, labels(c) as labels
 `;
 
 const MOST_LIKED_DATASETS = `
