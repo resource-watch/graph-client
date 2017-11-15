@@ -150,7 +150,8 @@ class GraphRouter {
           id: c._fields[0],
           label: c._fields[1],
           synonyms: c._fields[2],
-          labels: c._fields[3]
+          labels: c._fields[3],
+          count: c._fields[4]
         };
       });
     }
