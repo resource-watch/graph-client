@@ -151,7 +151,7 @@ class GraphRouter {
           label: c._fields[1],
           synonyms: c._fields[2],
           labels: c._fields[3],
-          count: c._fields[4]
+          count: c._fields[4] ? c._fields[4].low : 0
         };
       });
     }
