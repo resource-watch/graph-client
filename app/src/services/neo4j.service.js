@@ -13,7 +13,7 @@ const CHECK_EXISTS_USER = `MATCH (dataset:USER {id: {id}}) RETURN dataset`;
 
 const CREATE_RELATION = `
   MATCH (resource:{resourceType} {id:{resourceId}})
-  MERGE (concept:CONCEPT{id:{label}})
+  MATCH (concept:CONCEPT{id:{label}})
   MERGE (resource)-[r:TAGGED_WITH]->(concept) RETURN concept, resource, r
 `;
 
@@ -76,10 +76,10 @@ ORDER BY number_of_shared_concepts DESC
 `;
 
 const QUERY_SIMILAR_DATASET_WITH_DESCENDENT = `
-MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:CONCEPT)
-WITH COLLECT(c.id) AS main_tags
-MATCH (d2:DATASET)-[:TAGGED_WITH]->(c1:CONCEPT)-[*]->(c2:CONCEPT)
-WHERE c1.id IN main_tags OR c2.id IN main_tags
+MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:TOPIC)
+WITH COLLECT(c.id) AS main_tags, d
+MATCH (d2:DATASET)-[:TAGGED_WITH]->(c1:TOPIC)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]->(c2:TOPIC)
+WHERE (c1.id IN main_tags OR c2.id IN main_tags) AND d2.id <> d.id
 WITH COLLECT(DISTINCT c1.id) AS dataset_tags, d2.id AS dataset
 WITH size(dataset_tags) AS number_of_ocurrences, dataset_tags, dataset
 RETURN dataset, dataset_tags, number_of_ocurrences
