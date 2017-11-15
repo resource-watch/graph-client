@@ -116,7 +116,8 @@ RETURN DISTINCT datasets
 
 const QUERY_GET_LIST_CONCEPTS = `
 MATCH (c:CONCEPT)
-RETURN c.id, c.label, c.synonyms, labels(c) as labels
+OPTIONAL MATCH (c)<-[:TAGGED_WITH]-(d:DATASET)
+RETURN c.id, c.label, c.synonyms, labels(c) as labels, count(d) as number_of_datasets_tagged
 `;
 
 const QUERY_GET_CONCEPTS_INFERRED_FROM_LIST = `
