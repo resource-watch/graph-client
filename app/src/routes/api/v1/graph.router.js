@@ -151,7 +151,8 @@ class GraphRouter {
           label: c._fields[1],
           synonyms: c._fields[2],
           labels: c._fields[3],
-          numberOfDatasetsTagged: c._fields[4] ? c._fields[4].low : 0
+          numberOfDatasetsTagged: c._fields[4] ? c._fields[4].low : 0,
+          datasets: c._fields[5]
         };
       });
     }
