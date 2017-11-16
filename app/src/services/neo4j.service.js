@@ -118,8 +118,8 @@ const QUERY_GET_LIST_CONCEPTS = `
 MATCH (c:CONCEPT)
 WITH c
 MATCH (c)<-[:TAGGED_WITH]-(d:DATASET)
-WITH COLLECT(d.id) AS datasets, c, d
-RETURN c.id, c.label, c.synonyms, labels(c) AS labels, count(d) AS number_of_datasets_tagged, datasets
+WITH COLLECT(d.id) AS datasets, c, COUNT(d) as number_of_datasets_tagged
+RETURN c.id, c.label, c.synonyms, labels(c) AS labels, number_of_datasets_tagged, datasets
 `;
 
 const QUERY_GET_CONCEPTS_INFERRED_FROM_LIST = `
