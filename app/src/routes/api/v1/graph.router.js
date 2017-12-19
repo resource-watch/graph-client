@@ -19,7 +19,7 @@ class GraphRouter {
   static async associateResource(ctx) {
     ctx.assert(ctx.request.body && ctx.request.body.tags && ctx.request.body.tags.length > 0, 400, 'Tags body param is required');
     logger.info('Associating ', ctx.params.resourceType, ' node with id ', ctx.params.idResource, 'and tags ', ctx.request.body.tags);
-    ctx.body = await neo4jService.createRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.request.body.tags);
+    ctx.body = await neo4jService.createRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.request.body.tags, ctx.request.body.application || 'rw');
   }
 
   static async createWidgetNodeAndRelation(ctx) {
@@ -35,7 +35,7 @@ class GraphRouter {
   static async createMetadataNodeAndRelation(ctx) {
     ctx.assert(['DATASET', 'LAYER', 'WIDGET'].indexOf(ctx.params.resourceType) >= 0, 400, `Resource ${ctx.params.resourceType} invalid`);
     logger.info('Creating metadata node and relation with idWidget ', ctx.params.idMetadata, ' and resourcetype ', ctx.params.resourceType, ' and idresource', ctx.params.idResource);
-    ctx.body = await neo4jService.createMetadataNodeAndRelation(ctx.params.resourceType, ctx.params.idResource, ctx.params.idMetadata);
+    ctx.body = await neo4jService.createMetadataNodeAndRelation(ctx.params.resourceType, ctx.params.idResource, ctx.params.idMetadata, );
   }
 
 
@@ -61,12 +61,12 @@ class GraphRouter {
 
   static async createFavouriteRelationWithResource(ctx) {
     logger.info('Creating favourite relation ');
-    ctx.body = await neo4jService.createFavouriteRelationWithResource(ctx.params.userId, ctx.params.resourceType, ctx.params.idResource);
+    ctx.body = await neo4jService.createFavouriteRelationWithResource(ctx.params.userId, ctx.params.resourceType, ctx.params.idResource, ctx.request.body.application || 'rw');
   }
 
   static async deleteFavouriteRelationWithResource(ctx) {
     logger.info('Creating favourite relation ');
-    ctx.body = await neo4jService.deleteFavouriteRelationWithResource(ctx.params.userId, ctx.params.resourceType, ctx.params.idResource);
+    ctx.body = await neo4jService.deleteFavouriteRelationWithResource(ctx.params.userId, ctx.params.resourceType, ctx.params.idResource, ctx.request.query.application || 'rw');
   }
 
   static async mostLikedDatasets(ctx) {

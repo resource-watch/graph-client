@@ -222,18 +222,19 @@ class Neo4JService {
     });
   }
 
-  async createRelationWithConcepts(resourceType, resourceId, concepts) {
+  async createRelationWithConcepts(resourceType, resourceId, concepts, application) {
     logger.debug('Creating relations with concepts, Type ', resourceType, ' and id ', resourceId, 'and concepts', concepts);
     for (let i = 0, length = concepts.length; i < length; i++) {
       logger.debug(CREATE_RELATION.replace('{resourceType}', resourceType));
       await this.run(CREATE_RELATION.replace('{resourceType}', resourceType), {
         resourceId,
-        label: concepts[i]
+        label: concepts[i],
+        application
       });
     }
   }
 
-  async createFavouriteRelationWithResource(userId, resourceType, resourceId) {
+  async createFavouriteRelationWithResource(userId, resourceType, resourceId, application) {
 
     logger.debug('Creating favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
     logger.debug('Checking if exist user');
@@ -248,17 +249,19 @@ class Neo4JService {
     }
     await this.run(CREATE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId,
-      userId
+      userId,
+      application
     });
   }
 
-  async deleteFavouriteRelationWithResource(userId, resourceType, resourceId) {
+  async deleteFavouriteRelationWithResource(userId, resourceType, resourceId, application) {
 
-    logger.debug('deleting favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
+    logger.debug('deleting favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId, 'and application ', application);
 
     await this.run(DELETE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId,
-      userId
+      userId,
+      application
     });
   }
 
