@@ -69,16 +69,16 @@ const DELETE_METADATA_NODE = `
 `;
 
 const QUERY_SIMILAR_DATASET = `
-MATCH p=(d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:CONCEPT)<-[:TAGGED_WITH]-(d2:DATASET)
+MATCH p=(d:DATASET{id:{dataset}})-[:TAGGED_WITH {application: {application}}]->(c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d2:DATASET)
 WITH count(c) AS number_of_shared_concepts, COLLECT(c.id) AS shared_concepts, d2
 RETURN d2.id, shared_concepts, number_of_shared_concepts
 ORDER BY number_of_shared_concepts DESC
 `;
 
 const QUERY_SIMILAR_DATASET_WITH_DESCENDENT = `
-MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH]->(c:TOPIC)
+MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH {application: {application}}]->(c:TOPIC)
 WITH COLLECT(c.id) AS main_tags, d
-MATCH (d2:DATASET)-[:TAGGED_WITH]->(c1:TOPIC)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]->(c2:TOPIC)
+MATCH (d2:DATASET)-[:TAGGED_WITH {application: {application}}]->(c1:TOPIC)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]->(c2:TOPIC)
 WHERE (c1.id IN main_tags OR c2.id IN main_tags) AND d2.id <> d.id
 WITH COLLECT(DISTINCT c1.id) AS dataset_tags, d2.id AS dataset
 WITH size(dataset_tags) AS number_of_ocurrences, dataset_tags, dataset
@@ -87,24 +87,24 @@ ORDER BY number_of_ocurrences DESC
 `;
 
 const QUERY_SEARCH_PARTS= [`
-MATCH (c:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts1}
 WITH COLLECT(d.id) AS datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts1})
 WITH COLLECT(DISTINCT d.id) + datasets AS datasets
 `, `
-MATCH (c:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts2} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts2}) AND d.id IN datasets
 WITH COLLECT(DISTINCT d.id) + tempSet AS datasets
 `, `
-MATCH (c:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts3} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts3}) AND d.id IN datasets
 WITH COLLECT(DISTINCT d.id) + tempSet AS datasets
 `];
@@ -113,11 +113,10 @@ const QUERY_SEARCH_FINAL = `
 RETURN DISTINCT datasets
 `;
 
-
 const QUERY_GET_LIST_CONCEPTS = `
 MATCH (c:CONCEPT)
 WITH c
-MATCH (c)<-[:TAGGED_WITH]-(d:DATASET)
+MATCH (c)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WITH COLLECT(d.id) AS datasets, c, COUNT(d) as number_of_datasets_tagged
 RETURN c.id, c.label, c.synonyms, labels(c) AS labels, number_of_datasets_tagged, datasets
 `;
@@ -132,7 +131,7 @@ RETURN c.id, c.label, c.synonyms, labels(c) as labels
 `;
 
 const MOST_LIKED_DATASETS = `
-MATCH (u:USER)-[:FAVOURITE]->(d:DATASET)
+MATCH (u:USER)-[:FAVOURITE {application: {application}}]->(d:DATASET)
 RETURN d.id, COUNT(d) AS number_of_favorites
 ORDER BY number_of_favorites DESC
 `;
@@ -157,7 +156,7 @@ ORDER BY d.views DESC
 `;
 
 const QUERY_MOST_VIEWED_BY_USER = `
-MATCH (d:DATASET)<-[v:VIEWED]-(u:USER {id: {userId}})
+MATCH (d:DATASET)<-[v:VIEWED {application: {application}}]-(u:USER {id: {userId}})
 RETURN d.id, v.views
 ORDER BY v.views DESC
 `;
@@ -198,20 +197,25 @@ class Neo4JService {
     return data;
   }
 
-  async getListConcepts() {
+  async getListConcepts(application) {
     logger.debug('Getting list concepts');
-    return this.run(QUERY_GET_LIST_CONCEPTS);
+    return this.run(QUERY_GET_LIST_CONCEPTS, {
+      application
+    });
   }
 
-  async mostLikedDatasets() {
+  async mostLikedDatasets(application) {
     logger.debug('Getting most liked datasets');
-    return this.run(MOST_LIKED_DATASETS);
+    return this.run(MOST_LIKED_DATASETS, {
+      application
+    });
   }
 
-  async getConceptsInferredFromList(concepts) {
+  async getConceptsInferredFromList(concepts, application) {
     logger.debug('Getting list concepts');
     return this.run(QUERY_GET_CONCEPTS_INFERRED_FROM_LIST, {
-      concepts
+      concepts,
+      application
     });
   }
 
@@ -222,18 +226,19 @@ class Neo4JService {
     });
   }
 
-  async createRelationWithConcepts(resourceType, resourceId, concepts) {
+  async createRelationWithConcepts(resourceType, resourceId, concepts, application) {
     logger.debug('Creating relations with concepts, Type ', resourceType, ' and id ', resourceId, 'and concepts', concepts);
     for (let i = 0, length = concepts.length; i < length; i++) {
       logger.debug(CREATE_RELATION.replace('{resourceType}', resourceType));
       await this.run(CREATE_RELATION.replace('{resourceType}', resourceType), {
         resourceId,
-        label: concepts[i]
+        label: concepts[i],
+        application
       });
     }
   }
 
-  async createFavouriteRelationWithResource(userId, resourceType, resourceId) {
+  async createFavouriteRelationWithResource(userId, resourceType, resourceId, application) {
 
     logger.debug('Creating favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
     logger.debug('Checking if exist user');
@@ -248,17 +253,19 @@ class Neo4JService {
     }
     await this.run(CREATE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId,
-      userId
+      userId,
+      application
     });
   }
 
-  async deleteFavouriteRelationWithResource(userId, resourceType, resourceId) {
+  async deleteFavouriteRelationWithResource(userId, resourceType, resourceId, application) {
 
-    logger.debug('deleting favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
+    logger.debug('deleting favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId, 'and application ', application);
 
     await this.run(DELETE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId,
-      userId
+      userId,
+      application
     });
   }
 
@@ -343,37 +350,45 @@ class Neo4JService {
     });
   }
 
-  async querySimilarDatasets(dataset) {
+  async querySimilarDatasets(dataset, application) {
     logger.debug('Obtaining similar datasets of ', dataset);
     return this.run(QUERY_SIMILAR_DATASET, {
-      dataset
+      dataset,
+      application
     });
   }
 
-  async querySimilarDatasetsIncludingDescendent(dataset) {
+  async querySimilarDatasetsIncludingDescendent(dataset, application) {
     logger.debug('Obtaining similar datasets including descendent of ', dataset);
     return this.run(QUERY_SIMILAR_DATASET_WITH_DESCENDENT, {
-      dataset
+      dataset,
+      application
     });
   }
 
-  async queryMostViewed() {
+  async queryMostViewed(application) {
     logger.debug('Obtaining dataset most viewed ');
-    return this.run(QUERY_MOST_VIEWED);
+    return this.run(QUERY_MOST_VIEWED, {
+      application
+    });
   }
 
-  async queryMostViewedByUser(userId) {
+  async queryMostViewedByUser(userId, application) {
     logger.debug('Obtaining dataset most viewed by user ', userId);
-    return this.run(QUERY_MOST_VIEWED_BY_USER, { userId });
+    return this.run(QUERY_MOST_VIEWED_BY_USER, {
+      userId,
+      application
+    });
   }
 
-  async querySearchDatasets(concepts) {
+  async querySearchDatasets(concepts, application) {
     logger.debug('Searching datasets with concepts ', concepts);
     let query = '';
     const params = {
       concepts1: [],
       concepts2: [],
-      concepts3: []
+      concepts3: [],
+      application
     };
     if (concepts && concepts.length > 0) {
       for (let i = 0, length = concepts.length; i < length; i++) {
