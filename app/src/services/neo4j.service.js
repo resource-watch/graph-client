@@ -14,13 +14,13 @@ const CHECK_EXISTS_USER = `MATCH (dataset:USER {id: {id}}) RETURN dataset`;
 const CREATE_RELATION = `
   MATCH (resource:{resourceType} {id:{resourceId}})
   MATCH (concept:CONCEPT{id:{label}})
-  MERGE (resource)-[r:TAGGED_WITH]->(concept) RETURN concept, resource, r
+  MERGE (resource)-[r:TAGGED_WITH {application: {application}}]->(concept) RETURN concept, resource, r
 `;
 
 const CREATE_RELATION_FAVOURITE_AND_RESOURCE = `
 MATCH (resource:{resourceType} {id:{resourceId}})
 MERGE (user:USER{id:{userId}})
-MERGE (user)-[r:FAVOURITE]->(resource) RETURN user, resource, r
+MERGE (user)-[r:FAVOURITE {application: {application}}]->(resource) RETURN user, resource, r
 `;
 
 const CREATE_WIDGET_AND_RELATION = `
@@ -69,8 +69,8 @@ const DELETE_METADATA_NODE = `
 `;
 
 const QUERY_SIMILAR_DATASET = `
-MATCH p=(d:DATASET{id:{dataset}})-[:TAGGED_WITH {application: {application}}]->(c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d2:DATASET)
-WITH count(c) AS number_of_shared_concepts, COLLECT(c.id) AS shared_concepts, d2
+MATCH p=(d:DATASET{id:{dataset}})-[:TAGGED_WITH {application: {application}}]->(c:TOPIC)<-[:TAGGED_WITH {application: {application}}]-(d2:DATASET)
+WITH length(COLLECT(c.id)) AS number_of_shared_concepts, COLLECT(c.id) AS shared_concepts, d2
 RETURN d2.id, shared_concepts, number_of_shared_concepts
 ORDER BY number_of_shared_concepts DESC
 `;
@@ -78,7 +78,7 @@ ORDER BY number_of_shared_concepts DESC
 const QUERY_SIMILAR_DATASET_WITH_DESCENDENT = `
 MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH {application: {application}}]->(c:TOPIC)
 WITH COLLECT(c.id) AS main_tags, d
-MATCH (d2:DATASET)-[:TAGGED_WITH {application: {application}}]->(c1:TOPIC)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]->(c2:TOPIC)
+MATCH (d2:DATASET)-[:TAGGED_WITH {application: {application}}]->(c1:TOPIC)-[:PART_OF|:IS_A|:QUALITY_OF*1..15]->(c2:TOPIC)
 WHERE (c1.id IN main_tags OR c2.id IN main_tags) AND d2.id <> d.id
 WITH COLLECT(DISTINCT c1.id) AS dataset_tags, d2.id AS dataset
 WITH size(dataset_tags) AS number_of_ocurrences, dataset_tags, dataset
@@ -90,23 +90,24 @@ const QUERY_SEARCH_PARTS= [`
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts1}
 WITH COLLECT(d.id) AS datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts1})
-WITH COLLECT(DISTINCT d.id) + datasets AS datasets
+WITH COLLECT(d.id) + datasets AS datasets
 `, `
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts2} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts2}) AND d.id IN datasets
-WITH COLLECT(DISTINCT d.id) + tempSet AS datasets
+WITH COLLECT(d.id) + tempSet AS datasets
 `, `
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts3} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts3}) AND d.id IN datasets
 WITH COLLECT(DISTINCT d.id) + tempSet AS datasets
+RETURN DISTINCT datasets
 `];
 
 const QUERY_SEARCH_FINAL = `
@@ -122,7 +123,7 @@ RETURN c.id, c.label, c.synonyms, labels(c) AS labels, number_of_datasets_tagged
 `;
 
 const QUERY_GET_CONCEPTS_INFERRED_FROM_LIST = `
-MATCH (c:CONCEPT)-[:TYPE_OF|:PART_OF|:IS_A|QUALITY_OF*]->(c2:CONCEPT)
+MATCH (c:CONCEPT)-[:PART_OF|:IS_A|:QUALITY_OF*]->(c2:CONCEPT)
 WHERE c.id IN {concepts}
 WITH collect(DISTINCT c.id) + collect(DISTINCT c2.id) as results
 MATCH (c:CONCEPT)
