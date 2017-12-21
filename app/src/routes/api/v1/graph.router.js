@@ -38,7 +38,6 @@ class GraphRouter {
     ctx.body = await neo4jService.createMetadataNodeAndRelation(ctx.params.resourceType, ctx.params.idResource, ctx.params.idMetadata, );
   }
 
-
   static async deleteDataset(ctx) {
     logger.info('Deleting dataset node with id ', ctx.params.id);
     ctx.body = await neo4jService.deleteDatasetNode(ctx.params.id);
@@ -71,7 +70,8 @@ class GraphRouter {
 
   static async mostLikedDatasets(ctx) {
     logger.info('Getting most liked datasets ');
-    const response = await neo4jService.mostLikedDatasets();
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    const response = await neo4jService.mostLikedDatasets(application);
     let data = [];
     if (response) {
       data = response.records.map((c) => {
@@ -88,6 +88,7 @@ class GraphRouter {
 
   static async conceptsInferred(ctx) {
     let concepts = null;
+    const application = ctx.query.application || ctx.query.app || 'rw';
     if (ctx.query.concepts) {
       concepts = ctx.query.concepts.split(',').map(c => c.trim());
     } else if (ctx.request.body) {
@@ -96,7 +97,7 @@ class GraphRouter {
     ctx.assert(concepts, 400, 'Concepts is required');
     logger.info('Getting concepts inferred ', concepts);
 
-    const response = await neo4jService.getConceptsInferredFromList(concepts);
+    const response = await neo4jService.getConceptsInferredFromList(concepts, application);
     let data = [];
     if (response) {
       data = response.records.map((c) => {
@@ -115,6 +116,7 @@ class GraphRouter {
 
   static async conceptsAncestors(ctx) {
     let concepts = null;
+    const application = ctx.query.application || ctx.query.app || 'rw';
     if (ctx.query.concepts) {
       concepts = ctx.query.concepts.split(',').map(c => c.trim());
     } else if (ctx.request.body) {
@@ -123,7 +125,7 @@ class GraphRouter {
     ctx.assert(concepts, 400, 'Concepts is required');
     logger.info('Getting concepts inferred ', concepts);
 
-    const response = await neo4jService.getConceptsAncestorsFromList(concepts);
+    const response = await neo4jService.getConceptsAncestorsFromList(concepts, application);
     let data = [];
     if (response) {
       data = response.records.map((c) => {
@@ -142,7 +144,8 @@ class GraphRouter {
 
   static async listConcepts(ctx) {
     logger.info('Getting list concepts ');
-    const response = await neo4jService.getListConcepts();
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    const response = await neo4jService.getListConcepts(application);
     let data = [];
     if (response.records) {
       data = response.records.map((c) => {
@@ -163,6 +166,7 @@ class GraphRouter {
 
   static async querySearchDatasets(ctx) {
     let concepts = null;
+    const application = ctx.query.application || ctx.query.app || 'rw';
     if (ctx.method === 'GET') {
       ctx.assert(ctx.query.concepts, 400, 'Concepts query params is required');
       concepts = ctx.query.concepts;
@@ -170,7 +174,7 @@ class GraphRouter {
       concepts = ctx.request.body.concepts;
     }
     logger.info('Searching dataset with concepts', concepts);
-    const results = await neo4jService.querySearchDatasets(concepts);
+    const results = await neo4jService.querySearchDatasets(concepts, application);
 
     let datasetIds = [];
     const data = results.records ? results.records.map(el => {
@@ -192,8 +196,8 @@ class GraphRouter {
 
   static async queryMostViewed(ctx) {
     logger.info('Returning datasets most viewed');
-    const results = await neo4jService.queryMostViewed();
-
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    const results = await neo4jService.queryMostViewed(application);
     const datasetIds = [];
     const data = results.records ? results.records.map(el => {
       datasetIds.push(el._fields[0]);
@@ -224,8 +228,8 @@ class GraphRouter {
       return;
     }
     const user = JSON.parse(ctx.query.loggedUser);
-
-    const results = await neo4jService.queryMostViewedByUser(user.id);
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    const results = await neo4jService.queryMostViewedByUser(user.id, application);
 
     const datasetIds = [];
     const data = results.records ? results.records.map(el => {
@@ -252,7 +256,8 @@ class GraphRouter {
 
   static async querySimilarDatasets(ctx) {
     logger.info('Obtaining similar datasets', ctx.params.dataset);
-    const results = await neo4jService.querySimilarDatasets(ctx.params.dataset);
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    const results = await neo4jService.querySimilarDatasets(ctx.params.dataset, application);
     const datasetIds = [];
     const data = results && results.records ? results.records.map((el) => {
       datasetIds.push(el._fields[0]);
@@ -273,7 +278,8 @@ class GraphRouter {
 
   static async querySimilarDatasetsIncludingDescendent(ctx) {
     logger.info('Obtaining similar datasets with descendent', ctx.params.dataset);
-    const results = await neo4jService.querySimilarDatasetsIncludingDescendent(ctx.params.dataset);
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    const results = await neo4jService.querySimilarDatasetsIncludingDescendent(ctx.params.dataset, application);
     const datasetIds = [];
     const data = results && results.records ? results.records.map((el) => {
       datasetIds.push(el._fields[0]);
