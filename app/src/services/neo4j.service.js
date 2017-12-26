@@ -107,7 +107,6 @@ WITH COLLECT(d.id) AS tempSet, datasets
 OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts3}) AND d.id IN datasets
 WITH COLLECT(DISTINCT d.id) + tempSet AS datasets
-RETURN DISTINCT datasets
 `];
 
 const QUERY_SEARCH_FINAL = `
