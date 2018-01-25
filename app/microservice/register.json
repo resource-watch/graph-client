@@ -1,5 +1,7 @@
 {
 	"name": "graph-client",
+	"cache": ["graph-client"],
+	"uncache": ["graph-client"],
 	"endpoints": [{
 		"path": "/v1/graph/query",
 		"method": "GET",
