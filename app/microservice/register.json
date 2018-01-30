@@ -112,6 +112,13 @@
 			"path": "/api/v1/graph/query/similar-dataset"
 		}
 	}, {
+		"path": "/v1/graph/query/similar-dataset/:dataset",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/similar-dataset/:dataset"
+		}
+	}, {
 		"path": "/v1/graph/query/list-concepts",
 		"method": "GET",
 		"redirect": {
@@ -152,6 +159,13 @@
 		"redirect": {
 			"method": "GET",
 			"path": "/api/v1/graph/query/similar-dataset-including-descendent"
+		}
+	}, {
+		"path": "/v1/graph/query/similar-dataset-including-descendent/:dataset",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/similar-dataset-including-descendent/:dataset"
 		}
 	}, {
 		"path": "/v1/graph/query/search-datasets",

@@ -257,6 +257,9 @@ class GraphRouter {
   static async querySimilarDatasets(ctx) {
     logger.info('Obtaining similar datasets', ctx.params.dataset);
     const application = ctx.query.application || ctx.query.app || 'rw';
+    if (ctx.params.dataset) {
+      ctx.query.dataset = ctx.params.dataset;
+    }
     ctx.assert(ctx.query.dataset, 400, 'dataset query param required');
     const results = await neo4jService.querySimilarDatasets(ctx.query.dataset.split(','), application);
     const datasetIds = [];
@@ -280,6 +283,9 @@ class GraphRouter {
   static async querySimilarDatasetsIncludingDescendent(ctx) {
     logger.info('Obtaining similar datasets with descendent', ctx.params.dataset);
     const application = ctx.query.application || ctx.query.app || 'rw';
+    if (ctx.params.dataset) {
+      ctx.query.dataset = ctx.params.dataset;
+    }
     ctx.assert(ctx.query.dataset, 400, 'dataset query param required');
     const results = await neo4jService.querySimilarDatasetsIncludingDescendent(ctx.query.dataset.split(','), application);
     const datasetIds = [];
@@ -352,6 +358,8 @@ router.post('/query/concepts-ancestors', GraphRouter.conceptsAncestors);
 
 router.get('/query/similar-dataset', GraphRouter.querySimilarDatasets);
 router.get('/query/similar-dataset-including-descendent', GraphRouter.querySimilarDatasetsIncludingDescendent);
+router.get('/query/similar-dataset/:dataset', GraphRouter.querySimilarDatasets);
+router.get('/query/similar-dataset-including-descendent/:dataset', GraphRouter.querySimilarDatasetsIncludingDescendent);
 router.get('/query/search-datasets', GraphRouter.querySearchDatasets);
 router.get('/query/most-liked-datasets', GraphRouter.mostLikedDatasets);
 router.post('/query/search-datasets', GraphRouter.querySearchDatasets);
