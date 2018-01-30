@@ -69,14 +69,16 @@ const DELETE_METADATA_NODE = `
 `;
 
 const QUERY_SIMILAR_DATASET = `
-MATCH p=(d:DATASET{id:{dataset}})-[:TAGGED_WITH {application: {application}}]->(c:TOPIC)<-[:TAGGED_WITH {application: {application}}]-(d2:DATASET)
+MATCH p=(d:DATASET)-[:TAGGED_WITH {application: {application}}]->(c:TOPIC)<-[:TAGGED_WITH {application: {application}}]-(d2:DATASET)
+WHERE d.id IN {datasets}
 WITH length(COLLECT(c.id)) AS number_of_shared_concepts, COLLECT(c.id) AS shared_concepts, d2
 RETURN d2.id, shared_concepts, number_of_shared_concepts
 ORDER BY number_of_shared_concepts DESC
 `;
 
 const QUERY_SIMILAR_DATASET_WITH_DESCENDENT = `
-MATCH (d:DATASET{id:{dataset}})-[:TAGGED_WITH {application: {application}}]->(c:TOPIC)
+MATCH (d:DATASET)-[:TAGGED_WITH {application: {application}}]->(c:TOPIC)
+WHERE d.id IN {datasets}
 WITH COLLECT(c.id) AS main_tags, d
 MATCH (d2:DATASET)-[:TAGGED_WITH {application: {application}}]->(c1:TOPIC)-[:PART_OF|:IS_A|:QUALITY_OF*1..15]->(c2:TOPIC)
 WHERE (c1.id IN main_tags OR c2.id IN main_tags) AND d2.id <> d.id
@@ -351,18 +353,18 @@ class Neo4JService {
     });
   }
 
-  async querySimilarDatasets(dataset, application) {
-    logger.debug('Obtaining similar datasets of ', dataset);
+  async querySimilarDatasets(datasets, application) {
+    logger.debug('Obtaining similar datasets of ', datasets);
     return this.run(QUERY_SIMILAR_DATASET, {
-      dataset,
+      datasets,
       application
     });
   }
 
-  async querySimilarDatasetsIncludingDescendent(dataset, application) {
-    logger.debug('Obtaining similar datasets including descendent of ', dataset);
+  async querySimilarDatasetsIncludingDescendent(datasets, application) {
+    logger.debug('Obtaining similar datasets including descendent of ', datasets);
     return this.run(QUERY_SIMILAR_DATASET_WITH_DESCENDENT, {
-      dataset,
+      datasets,
       application
     });
   }
