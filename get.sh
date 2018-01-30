@@ -2,10 +2,8 @@ wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/aff
 wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/can_affect.csv
 wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/is_a.csv
 wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/is_involved_in.csv
-wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/is_similar_to.csv
 wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/located_at.csv
 wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/nodes.csv
 wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/part_of.csv
 wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/quality_of.csv
 wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/related_to.csv
-wget https://raw.githubusercontent.com/resource-watch/graph/master/csv_files/type_of.csv
