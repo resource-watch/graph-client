@@ -194,6 +194,36 @@ class GraphRouter {
     };
   }
 
+  static async querySearchDatasetsIds(ctx) {
+    let concepts = null;
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    if (ctx.method === 'GET') {
+      ctx.assert(ctx.query.concepts, 400, 'Concepts query params is required');
+      concepts = ctx.query.concepts;
+    } else {
+      concepts = ctx.request.body.concepts;
+    }
+    logger.info('Searching dataset with concepts', concepts);
+    const results = await neo4jService.querySearchDatasets(concepts, application);
+
+    let datasetIds = [];
+    const data = results.records ? results.records.map(el => {
+      if (el._fields[0].length > 0) {
+        datasetIds = datasetIds.concat(el._fields[0]);
+      }
+      return el._fields[0];
+    }) : [];
+    let result = datasetIds;
+    // if (datasetIds.length > 0) {
+    //   result = await datasetService.checkDatasets(datasetIds, ctx.query);
+    // } else {
+    //   result = [];
+    // }
+    ctx.body = {
+      data: result
+    };
+  }
+
   static async queryMostViewed(ctx) {
     logger.info('Returning datasets most viewed');
     const application = ctx.query.application || ctx.query.app || 'rw';
@@ -361,6 +391,7 @@ router.get('/query/similar-dataset-including-descendent', GraphRouter.querySimil
 router.get('/query/similar-dataset/:dataset', GraphRouter.querySimilarDatasets);
 router.get('/query/similar-dataset-including-descendent/:dataset', GraphRouter.querySimilarDatasetsIncludingDescendent);
 router.get('/query/search-datasets', GraphRouter.querySearchDatasets);
+router.get('/query/search-datasets-ids', GraphRouter.querySearchDatasetsIds);
 router.get('/query/most-liked-datasets', GraphRouter.mostLikedDatasets);
 router.post('/query/search-datasets', GraphRouter.querySearchDatasets);
 router.get('/query/most-viewed', GraphRouter.queryMostViewed);
