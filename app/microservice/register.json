@@ -175,6 +175,13 @@
 			"path": "/api/v1/graph/query/search-datasets"
 		}
 	}, {
+		"path": "/v1/graph/query/search-datasets-ids",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/search-datasets-ids"
+		}
+	}, {
 		"path": "/v1/graph/query/most-liked-datasets",
 		"method": "GET",
 		"redirect": {
