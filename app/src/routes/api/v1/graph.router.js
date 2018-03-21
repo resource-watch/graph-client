@@ -197,6 +197,7 @@ class GraphRouter {
   static async querySearchDatasetsIds(ctx) {
     let concepts = null;
     const application = ctx.query.application || ctx.query.app || 'rw';
+    const sort = ctx.query.sort;
     if (ctx.method === 'GET') {
       ctx.assert(ctx.query.concepts, 400, 'Concepts query params is required');
       concepts = ctx.query.concepts;
@@ -213,14 +214,11 @@ class GraphRouter {
       }
       return el._fields[0];
     }) : [];
-    let result = datasetIds;
-    // if (datasetIds.length > 0) {
-    //   result = await datasetService.checkDatasets(datasetIds, ctx.query);
-    // } else {
-    //   result = [];
-    // }
+    if (sort) {
+      datasetIds = await neo4jService.sortDatasets(sort, datasetIds);
+    }
     ctx.body = {
-      data: result
+      data: datasetIds
     };
   }
 

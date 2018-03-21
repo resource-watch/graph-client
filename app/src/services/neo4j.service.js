@@ -411,6 +411,45 @@ class Neo4JService {
     return null;
   }
 
+  async sortDatasets(sort, datasets = null) {
+    let query = null;
+    let dir = 'ASC';
+    if (sort.startsWith('-')) {
+        sort = sort.substr(1, sort.length);
+        dir = 'DESC';
+    }
+    if (sort === 'most-favorited') {
+      query = `
+        MATCH (d:DATASET)
+        OPTIONAL MATCH (d)<-[f:FAVOURITE]-()
+        WITH d, COUNT(f) as favorites
+        ${datasets ? `WHERE d.id IN {datasets}` : ''}
+        RETURN d.id
+        ORDER BY favorites ${dir}
+      `;
+    }
+    if (sort === 'most-viewed') {
+      query = `
+        MATCH (d:DATASET)
+        ${datasets ? `WHERE d.id IN {datasets}` : ''}
+        return d.id
+        ORDER BY d.views ${dir}
+      `;
+    }
+    const results = await this.run(query, { datasets });
+    let datasetIds = [];
+    if (results.records) {
+      results.records.map(el => {
+        if (el._fields[0].length > 0) {
+          datasetIds = datasetIds.concat(el._fields[0]);
+        }
+        return el._fields[0];
+      });
+    }
+    return datasetIds;
+  }
+
 }
+
 
 module.exports = new Neo4JService();
