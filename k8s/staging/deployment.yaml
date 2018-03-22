@@ -19,15 +19,16 @@ spec:
         imagePullPolicy: Always
         resources:
           requests:
-            memory: "0Mi"
-            cpu: "0m"
+            memory: "128Mi"
+          limits:
+            memory: "512Mi"
         args:
           - start
         env:
           - name: PORT
             value: "4500"
           - name: NODE_ENV
-            value: staging
+            value: prod
           - name: NODE_PATH
             value: app/src
           - name: LOCAL_URL
@@ -37,6 +38,16 @@ spec:
                 secretKeyRef:
                   name: dbsecrets
                   key: NEO4J_URI
+          - name: NEO4J_USER
+            valueFrom:
+                secretKeyRef:
+                  name: dbsecrets
+                  key: NEO4J_USER
+          - name: NEO4J_PASSWORD
+            valueFrom:
+                secretKeyRef:
+                  name: dbsecrets
+                  key: NEO4J_PASSWORD
           - name: CT_URL
             valueFrom:
                 secretKeyRef:
@@ -57,6 +68,7 @@ spec:
                 secretKeyRef:
                   name: mssecrets
                   key: API_VERSION
+
         ports:
           - containerPort: 4500
 
