@@ -217,7 +217,7 @@ class GraphRouter {
           return el._fields[0];
         }) : [];
     }
-    if (sort && (sort.includes('most-viewed') || sort.includes('most-favorited')) {
+    if (sort && (sort.includes('most-viewed') || sort.includes('most-favorited'))) {
       datasetIds = await neo4jService.sortDatasets(sort, datasetIds);
     }
     ctx.body = {
