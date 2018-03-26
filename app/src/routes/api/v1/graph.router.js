@@ -220,7 +220,7 @@ class GraphRouter {
     if (datasetIds && datasetIds.length > 0 && sort && (sort.includes('most-viewed') || sort.includes('most-favorited'))) {
       datasetIds = await neo4jService.sortDatasets(sort, datasetIds);
     } else if (!datasetIds){
-      datasetIds = await neo4jService.sortDatasets(sort, []);
+      datasetIds = await neo4jService.sortDatasets(sort, datasetIds);
     }
     ctx.body = {
       data: datasetIds
