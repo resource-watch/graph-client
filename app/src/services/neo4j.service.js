@@ -164,6 +164,13 @@ RETURN d.id, v.views
 ORDER BY v.views DESC
 `;
 
+const QUERY_SEARCH_BY_LABEL_SYNONYMONS = `
+MATCH (d:DATASET)-[:TAGGED_WITH {application: {application}}]->(c:CONCEPT)
+WHERE size(filter(part IN {search} WHERE toLower(c.label) CONTAINS toLower(part))) > 0
+OR size(filter(x IN c.synonyms WHERE size(filter(part in {search} WHERE toLower(x) CONTAINS toLower(part))) > 0)) > 0
+RETURN d.id
+`;
+
 class Neo4JService {
 
   constructor() {
@@ -380,6 +387,14 @@ class Neo4JService {
     logger.debug('Obtaining dataset most viewed by user ', userId);
     return this.run(QUERY_MOST_VIEWED_BY_USER, {
       userId,
+      application
+    });
+  }
+
+  async querySearchByLabelSynonymons(application, search) {
+    logger.debug('Obtaining dataset by search ', search, 'and application ', application);
+    return this.run(QUERY_SEARCH_BY_LABEL_SYNONYMONS, {
+      search,
       application
     });
   }
