@@ -211,11 +211,11 @@
 			"path": "/api/v1/graph/query/most-viewed-by-user"
 		}
 	}, {
-		"path": "/query/search-by-label-synonyms",
+		"path": "/v1/graph/query/search-by-label-synonyms",
 		"method": "GET",
 		"redirect": {
 			"method": "GET",
-			"path": "/api/query/search-by-label-synonyms"
+			"path": "/api/v1/graph/query/search-by-label-synonyms"
 		}
 	}]
 }

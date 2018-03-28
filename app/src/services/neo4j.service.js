@@ -391,7 +391,7 @@ class Neo4JService {
     });
   }
 
-  async querySearchByLabelSynonymons(application, search) {
+  async querySearchByLabelSynonymons(search, application) {
     logger.debug('Obtaining dataset by search ', search, 'and application ', application);
     return this.run(QUERY_SEARCH_BY_LABEL_SYNONYMONS, {
       search,

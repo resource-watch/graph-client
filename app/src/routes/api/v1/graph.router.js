@@ -343,8 +343,9 @@ class GraphRouter {
     logger.info('Obtaining datasets by application and search ', ctx.query.search);
     const application = ctx.query.application || ctx.query.app || 'rw';
 
-    ctx.assert(ctx.query.dataset, 400, 'dataset query param required');
+    ctx.assert(ctx.query.search, 400, 'search query param required');
     const results = await neo4jService.querySearchByLabelSynonymons(ctx.query.search ? ctx.query.search.split(' ') : '', application);
+    logger.debug('AAA', results);
     const datasetIds = [];
     const data = results && results.records ? results.records.map((el) => {
       datasetIds.push(el._fields[0]);
