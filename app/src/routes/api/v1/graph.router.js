@@ -206,20 +206,20 @@ class GraphRouter {
     }
     let datasetIds = null;
     if (concepts) {
-        datasetIds = [];
-        logger.info('Searching dataset with concepts', concepts);
-        const results = await neo4jService.querySearchDatasets(concepts, application);
+      datasetIds = [];
+      logger.info('Searching dataset with concepts', concepts);
+      const results = await neo4jService.querySearchDatasets(concepts, application);
 
-        const data = results.records ? results.records.map(el => {
-          if (el._fields[0].length > 0) {
-            datasetIds = datasetIds.concat(el._fields[0]);
-          }
-          return el._fields[0];
-        }) : [];
+      const data = results.records ? results.records.map(el => {
+        if (el._fields[0].length > 0) {
+          datasetIds = datasetIds.concat(el._fields[0]);
+        }
+        return el._fields[0];
+      }) : [];
     }
     if (datasetIds && datasetIds.length > 0 && sort && (sort.includes('most-viewed') || sort.includes('most-favorited'))) {
       datasetIds = await neo4jService.sortDatasets(sort, datasetIds);
-    } else if (!datasetIds){
+    } else if (!datasetIds) {
       datasetIds = await neo4jService.sortDatasets(sort, datasetIds);
     }
     ctx.body = {
@@ -339,6 +339,27 @@ class GraphRouter {
     };
   }
 
+  static async querySearchByLabelSynonymons(ctx) {
+    logger.info('Obtaining datasets by application and search ', ctx.query.search);
+    const application = ctx.query.application || ctx.query.app || 'rw';
+
+    ctx.assert(ctx.query.search, 400, 'search query param required');
+    const results = await neo4jService.querySearchByLabelSynonymons(ctx.query.search ? ctx.query.search.split(' ') : '', application);
+    logger.debug('AAA', results);
+    const datasetIds = [];
+    const data = results && results.records ? results.records.map((el) => {
+      datasetIds.push(el._fields[0]);
+      return {
+        dataset: el._fields[0],
+        concepts: el._fields[1],
+        numberOfOcurrences: el._fieldLookup.dataset_tags
+      };
+    }) : [];
+    ctx.body = {
+      data: datasetIds
+    };
+  }
+
   static async visitedDataset(ctx) {
     logger.info('Visited dataset');
     const user = ctx.request.body && ctx.request.body.loggedUser;
@@ -399,6 +420,7 @@ router.get('/query/most-liked-datasets', GraphRouter.mostLikedDatasets);
 router.post('/query/search-datasets', GraphRouter.querySearchDatasets);
 router.get('/query/most-viewed', GraphRouter.queryMostViewed);
 router.get('/query/most-viewed-by-user', GraphRouter.queryMostViewedByUser);
+router.get('/query/search-by-label-synonyms', GraphRouter.querySearchByLabelSynonymons);
 
 
 router.post('/dataset/:id', isAuthorized, GraphRouter.createDataset);
