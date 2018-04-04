@@ -232,7 +232,7 @@ class Neo4JService {
       }
     }
     query += QUERY_GET_LIST_CONCEPTS[1];
-    return this.run(QUERY_GET_LIST_CONCEPTS, {
+    return this.run(query, {
       application,
       includes,
       search
