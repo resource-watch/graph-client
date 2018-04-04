@@ -127,7 +127,7 @@ ORDER BY number_of_datasets_tagged DESC
 
 const QUERY_GET_LIST_CONCEPTS_WHERE = [
   `size(filter(x IN LABELS(c)  WHERE x in {includes})) > 0`,
-  `WHERE size(filter(part IN {search} WHERE toLower(c.label) CONTAINS toLower(part))) > 0
+  `size(filter(part IN {search} WHERE toLower(c.label) CONTAINS toLower(part))) > 0
   OR size(filter(x IN c.synonyms WHERE size(filter(part in {search} WHERE toLower(x) CONTAINS toLower(part))) > 0)) > 0`
 ];
 
