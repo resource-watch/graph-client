@@ -115,14 +115,21 @@ const QUERY_SEARCH_FINAL = `
 RETURN DISTINCT datasets
 `;
 
-const QUERY_GET_LIST_CONCEPTS = `
+const QUERY_GET_LIST_CONCEPTS = [`
 MATCH (c:CONCEPT)
 WITH c
-OPTIONAL MATCH (c)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
-WITH COLLECT(d.id) AS datasets, c, COUNT(d) as number_of_datasets_tagged
+OPTIONAL MATCH (c)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)`,
+
+`WITH COLLECT(d.id) AS datasets, c, COUNT(d) as number_of_datasets_tagged
 RETURN c.id, c.label, c.synonyms, labels(c) AS labels, number_of_datasets_tagged, datasets
 ORDER BY number_of_datasets_tagged DESC
-`;
+`];
+
+const QUERY_GET_LIST_CONCEPTS_WHERE = [
+  `size(filter(x IN LABELS(c)  WHERE x in {includes})) > 0`,
+  `WHERE size(filter(part IN {search} WHERE toLower(c.label) CONTAINS toLower(part))) > 0
+  OR size(filter(x IN c.synonyms WHERE size(filter(part in {search} WHERE toLower(x) CONTAINS toLower(part))) > 0)) > 0`
+];
 
 const QUERY_GET_CONCEPTS_INFERRED_FROM_LIST = `
 MATCH (c:CONCEPT)-[:PART_OF|:IS_A|:QUALITY_OF*]->(c2:CONCEPT)
@@ -207,10 +214,28 @@ class Neo4JService {
     return data;
   }
 
-  async getListConcepts(application) {
+  async getListConcepts(application, includes = null, search = null) {
     logger.debug('Getting list concepts');
+    let query = QUERY_GET_LIST_CONCEPTS[0];
+    if ((includes && includes.length > 0) || search) {
+      query += ' WHERE ';
+      let gtOne = false;
+      if (includes && includes.length > 0) {
+        query += ` ${QUERY_GET_LIST_CONCEPTS_WHERE[0]} `;
+        gtOne = true;
+      }
+      if (search) {
+        if (gtOne) {
+          query += ' AND ';
+        }
+        query += ` ${QUERY_GET_LIST_CONCEPTS_WHERE[1]} `;
+      }
+    }
+    query += QUERY_GET_LIST_CONCEPTS[1];
     return this.run(QUERY_GET_LIST_CONCEPTS, {
-      application
+      application,
+      includes,
+      search
     });
   }
 

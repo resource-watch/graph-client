@@ -145,7 +145,17 @@ class GraphRouter {
   static async listConcepts(ctx) {
     logger.info('Getting list concepts ');
     const application = ctx.query.application || ctx.query.app || 'rw';
-    const response = await neo4jService.getListConcepts(application);
+    const includes = ctx.query.includes ? ctx.query.includes.split(',') : null;
+    const defaultIncludes = ['TOPIC', 'DATA_TYPE', 'TIME_PERIOD', 'FREQUENCY'];
+    const sanitizeIncludes = [];
+    if (includes) {
+      includes.forEach(el => {
+        if (defaultIncludes.indexOf(el.toUpperCase()) > -1) {
+          sanitizeIncludes.push(el.toUpperCase());
+        }
+      });
+    }
+    const response = await neo4jService.getListConcepts(application, sanitizeIncludes, ctx.query.search);
     let data = [];
     if (response.records) {
       data = response.records.map((c) => {
