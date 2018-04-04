@@ -217,14 +217,14 @@ class Neo4JService {
   async getListConcepts(application, includes = null, search = null) {
     logger.debug('Getting list concepts');
     let query = QUERY_GET_LIST_CONCEPTS[0];
-    if ((includes && includes.length > 0) || search) {
+    if ((includes && includes.length > 0) || (search && search.length > 0)) {
       query += ' WHERE ';
       let gtOne = false;
       if (includes && includes.length > 0) {
         query += ` ${QUERY_GET_LIST_CONCEPTS_WHERE[0]} `;
         gtOne = true;
       }
-      if (search) {
+      if (search && search.length > 0) {
         if (gtOne) {
           query += ' AND ';
         }

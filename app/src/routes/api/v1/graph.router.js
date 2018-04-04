@@ -155,7 +155,7 @@ class GraphRouter {
         }
       });
     }
-    const response = await neo4jService.getListConcepts(application, sanitizeIncludes, ctx.query.search);
+    const response = await neo4jService.getListConcepts(application, sanitizeIncludes, ctx.query.search ? ctx.query.search.split(',') : null);
     let data = [];
     if (response.records) {
       data = response.records.map((c) => {
