@@ -19,9 +19,16 @@ const CREATE_RELATION = `
 
 const DELETE_RELATION = `
   MATCH (resource:{resourceType} {id:{resourceId}})
-  MATCH (concept:CONCEPT{id:{label}})
+  MATCH (concept:CONCEPT)
   MATCH (resource)-[r:TAGGED_WITH {application: {application}}]->(concept) DELETE r
 `;
+
+const DELETE_RELATION_ALL_APPS = `
+  MATCH (resource:{resourceType} {id:{resourceId}})
+  MATCH (concept:CONCEPT)
+  MATCH (resource)-[r:TAGGED_WITH]->(concept) DELETE r
+`;
+
 
 const CREATE_RELATION_FAVOURITE_AND_RESOURCE = `
 MATCH (resource:{resourceType} {id:{resourceId}})
@@ -269,16 +276,23 @@ class Neo4JService {
     });
   }
 
-  async deleteRelationWithConcepts(resourceType, resourceId, concepts, application) {
-    logger.debug('deleting relations with concepts, Type ', resourceType, ' and id ', resourceId, 'and concepts', concepts);
-    for (let i = 0, length = concepts.length; i < length; i++) {
+  async deleteRelationWithConcepts(resourceType, resourceId, application) {
+    logger.debug('deleting relations with concepts, Type ', resourceType, ' and id ', resourceId);
+
+    if (application) {
       logger.debug(DELETE_RELATION.replace('{resourceType}', resourceType));
       await this.run(DELETE_RELATION.replace('{resourceType}', resourceType), {
         resourceId,
-        label: concepts[i],
+        application
+      });
+    } else {
+      logger.debug(DELETE_RELATION_ALL_APPS.replace('{resourceType}', resourceType));
+      await this.run(DELETE_RELATION_ALL_APPS.replace('{resourceType}', resourceType), {
+        resourceId,
         application
       });
     }
+
   }
 
   async createRelationWithConcepts(resourceType, resourceId, concepts, application) {
