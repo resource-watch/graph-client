@@ -22,6 +22,19 @@ class GraphRouter {
     ctx.body = await neo4jService.createRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.request.body.tags, ctx.request.body.application || 'rw');
   }
 
+  static async updateResource(ctx) {
+    ctx.assert(ctx.request.body && ctx.request.body.tags && ctx.request.body.tags.length > 0, 400, 'Tags body param is required');
+    logger.info('Associating ', ctx.params.resourceType, ' node with id ', ctx.params.idResource, 'and tags ', ctx.request.body.tags);
+    await neo4jService.deleteRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.request.body.application || 'rw');
+    ctx.body = await neo4jService.createRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.request.body.tags, ctx.request.body.application || 'rw');
+  }
+
+  static async disassociateResource(ctx) {
+    logger.info('Dissasociating ', ctx.params.resourceType, ' node with id ', ctx.params.idResource, 'and app ', ctx.query.application);
+    await neo4jService.deleteRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.query.application || 'rw');
+    ctx.body = 'ok';
+  }
+
   static async createWidgetNodeAndRelation(ctx) {
     logger.info('Creating widget node and relation with idWidget ', ctx.params.idWidget, ' and dataset ', ctx.params.idDataset);
     ctx.body = await neo4jService.createWidgetNodeAndRelation(ctx.params.idDataset, ctx.params.idWidget);
@@ -439,6 +452,8 @@ router.post('/widget/:idDataset/:idWidget', isAuthorized, checkExistsDataset, Gr
 router.post('/layer/:idDataset/:idLayer', isAuthorized, checkExistsDataset, GraphRouter.createLayerNodeAndRelation);
 router.post('/metadata/:resourceType/:idResource/:idMetadata', isAuthorized, checkExistsResource, GraphRouter.createMetadataNodeAndRelation);
 router.post('/:resourceType/:idResource/associate', isAuthorized, checkExistsResource, GraphRouter.associateResource);
+router.put('/:resourceType/:idResource/associate', isAuthorized, checkExistsResource, GraphRouter.updateResource);
+router.delete('/:resourceType/:idResource/associate', isAuthorized, checkExistsResource, GraphRouter.disassociateResource);
 router.post('/favourite/:resourceType/:idResource/:userId', isAuthorized, checkExistsResource, GraphRouter.createFavouriteRelationWithResource);
 
 router.delete('/favourite/:resourceType/:idResource/:userId', isAuthorized, checkExistsResource, GraphRouter.deleteFavouriteRelationWithResource);

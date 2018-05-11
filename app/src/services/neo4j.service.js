@@ -17,6 +17,19 @@ const CREATE_RELATION = `
   MERGE (resource)-[r:TAGGED_WITH {application: {application}}]->(concept) RETURN concept, resource, r
 `;
 
+const DELETE_RELATION = `
+  MATCH (resource:{resourceType} {id:{resourceId}})
+  MATCH (concept:CONCEPT)
+  MATCH (resource)-[r:TAGGED_WITH {application: {application}}]->(concept) DELETE r
+`;
+
+const DELETE_RELATION_ALL_APPS = `
+  MATCH (resource:{resourceType} {id:{resourceId}})
+  MATCH (concept:CONCEPT)
+  MATCH (resource)-[r:TAGGED_WITH]->(concept) DELETE r
+`;
+
+
 const CREATE_RELATION_FAVOURITE_AND_RESOURCE = `
 MATCH (resource:{resourceType} {id:{resourceId}})
 MERGE (user:USER{id:{userId}})
@@ -30,7 +43,7 @@ const CREATE_WIDGET_AND_RELATION = `
 `;
 
 const CREATE_LAYER_AND_RELATION = `
-  MATCH(dataset: DATASET {id: {idDataset}})
+  MATCH (dataset: DATASET {id: {idDataset}})
   MERGE (layer: LAYER {id: {idLayer}})
   MERGE (layer)-[r:BELONGS_TO]->(dataset) RETURN layer, dataset, r
 `;
@@ -261,6 +274,25 @@ class Neo4JService {
     return this.run(CHECK_EXISTS_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId
     });
+  }
+
+  async deleteRelationWithConcepts(resourceType, resourceId, application) {
+    logger.debug('deleting relations with concepts, Type ', resourceType, ' and id ', resourceId);
+
+    if (application) {
+      logger.debug(DELETE_RELATION.replace('{resourceType}', resourceType));
+      await this.run(DELETE_RELATION.replace('{resourceType}', resourceType), {
+        resourceId,
+        application
+      });
+    } else {
+      logger.debug(DELETE_RELATION_ALL_APPS.replace('{resourceType}', resourceType));
+      await this.run(DELETE_RELATION_ALL_APPS.replace('{resourceType}', resourceType), {
+        resourceId,
+        application
+      });
+    }
+
   }
 
   async createRelationWithConcepts(resourceType, resourceId, concepts, application) {
