@@ -193,6 +193,11 @@ OR size(filter(x IN c.synonyms WHERE size(filter(part in {search} WHERE toLower(
 RETURN d.id
 `;
 
+const QUERY_CONCEPTS_BY_DATASET = `
+MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET {id: {dataset}})
+RETURN c;
+`;
+
 class Neo4JService {
 
   constructor() {
@@ -251,6 +256,14 @@ class Neo4JService {
       application,
       includes,
       search
+    });
+  }
+
+  async getListConceptsByDataset(application, dataset) {
+    logger.debug('Getting list concepts by dataset');
+    return this.run(QUERY_CONCEPTS_BY_DATASET, {
+      application,
+      dataset
     });
   }
 

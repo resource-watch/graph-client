@@ -202,6 +202,48 @@ class GraphRouter {
     };
   }
 
+  static async listConceptsByDataset(ctx) {
+    logger.info('Getting list concepts');
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    const dataset = ctx.params.dataset;
+    const response = await neo4jService.getListConceptsByDataset(application, dataset);
+    let data = [];
+    if (response.records) {
+      data = response.records.map((c) => {
+        return {
+          id: dataset,
+          type: 'graph',
+          attributes: c._fields[0].properties
+        }
+      });
+    }
+    // ctx.set('cache', 'graph-default');
+    ctx.body = {
+      data
+    };
+  }
+
+  static async listConceptsByDatasetsIds(ctx) {
+    logger.info('Getting list concepts by find-by-ids');
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    const datasets = ctx.request.body.ids;
+    const data = await Promise.all(datasets.map(async(dataset) => {
+      const response = await neo4jService.getListConceptsByDataset(application, dataset);
+      if (response.records) {
+        return response.records.map((c) => {
+          return {
+            type: 'concept',
+            attributes: Object.assign({ dataset }, c._fields[0].properties)
+          };
+        });
+      }
+    }));
+    // ctx.set('cache', 'graph-default');
+    ctx.body = {
+      data: [].concat.apply([], data)
+    };
+  }
+
   static async querySearchDatasets(ctx) {
     let concepts = null;
     const application = ctx.query.application || ctx.query.app || 'rw';
@@ -447,6 +489,8 @@ async function checkExistsResource(ctx, next) {
 }
 
 router.get('/query/list-concepts', GraphRouter.listConcepts);
+router.get('/query/list-concepts/:dataset', GraphRouter.listConceptsByDataset);
+router.post('/query/list-concepts/find-by-ids', GraphRouter.listConceptsByDatasetsIds);
 router.get('/query/concepts-inferred', GraphRouter.conceptsInferred);
 router.post('/query/concepts-inferred', GraphRouter.conceptsInferred);
 router.get('/query/concepts-ancestors', GraphRouter.conceptsAncestors);
