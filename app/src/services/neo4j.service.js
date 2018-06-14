@@ -478,14 +478,13 @@ class Neo4JService {
       concepts1: [],
       concepts2: [],
       concepts3: [],
-      application,
-      depth: `1..${depth}`
+      application
     };
     if (concepts && concepts.length > 0) {
       for (let i = 0, length = concepts.length; i < length; i++) {
-        query += QUERY_SEARCH_PARTS[i];
+        query += QUERY_SEARCH_PARTS[i].replace('{depth}', `1..${depth}`);
 
-        params[`concepts${i+1}`] = concepts[i]; //.map(el => `'${el}'`).join(',');
+        params[`concepts${i + 1}`] = concepts[i]; //.map(el => `'${el}'`).join(',');
       }
       query += QUERY_SEARCH_FINAL;
     }
