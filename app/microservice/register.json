@@ -233,5 +233,19 @@
 			"method": "GET",
 			"path": "/api/v1/graph/query/search-by-label-synonyms"
 		}
+	},{
+		"path": "/v1/graph/query/list-concepts/:dataset",
+		"method": "GET",
+		"redirect": {
+			"method": "GET",
+			"path": "/api/v1/graph/query/list-concepts/:dataset"
+		}
+	},{
+		"path": "/v1/graph/find-by-ids",
+		"method": "POST",
+		"redirect": {
+			"method": "POST",
+			"path": "/api/v1/graph/query/list-concepts/find-by-ids"
+		}
 	}]
 }
