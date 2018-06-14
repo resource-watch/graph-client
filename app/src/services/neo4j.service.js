@@ -105,21 +105,21 @@ const QUERY_SEARCH_PARTS= [`
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts1}
 WITH COLLECT(d.id) AS datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*{depth}]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts1})
 WITH COLLECT(d.id) + datasets AS datasets
 `, `
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts2} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*{depth}]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts2}) AND d.id IN datasets
 WITH COLLECT(d.id) + tempSet AS datasets
 `, `
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts3} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
+OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*{depth}]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts3}) AND d.id IN datasets
 WITH COLLECT(DISTINCT d.id) + tempSet AS datasets
 `];
@@ -458,14 +458,15 @@ class Neo4JService {
     });
   }
 
-  async querySearchDatasets(concepts, application) {
+  async querySearchDatasets(concepts, application, depth = 15) {
     logger.debug('Searching datasets with concepts ', concepts);
     let query = '';
     const params = {
       concepts1: [],
       concepts2: [],
       concepts3: [],
-      application
+      application,
+      depth: `1..${depth}`
     };
     if (concepts && concepts.length > 0) {
       for (let i = 0, length = concepts.length; i < length; i++) {

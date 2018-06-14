@@ -197,7 +197,7 @@ class GraphRouter {
       concepts = ctx.request.body.concepts;
     }
     logger.info('Searching dataset with concepts', concepts);
-    const results = await neo4jService.querySearchDatasets(concepts, application);
+    const results = await neo4jService.querySearchDatasets(concepts, application, ctx.query.depth);
 
     let datasetIds = [];
     const data = results.records ? results.records.map(el => {
