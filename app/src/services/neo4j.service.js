@@ -105,6 +105,7 @@ const QUERY_SEARCH_PARTS= [`
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts1}
 WITH COLLECT(d.id) AS datasets
+`, `
 OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*{depth}]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts1})
 WITH COLLECT(d.id) + datasets AS datasets
@@ -112,6 +113,7 @@ WITH COLLECT(d.id) + datasets AS datasets
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts2} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
+`, `
 OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*{depth}]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts2}) AND d.id IN datasets
 WITH COLLECT(d.id) + tempSet AS datasets
@@ -119,6 +121,7 @@ WITH COLLECT(d.id) + tempSet AS datasets
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts3} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
+`, `
 OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*{depth}]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts3}) AND d.id IN datasets
 WITH COLLECT(DISTINCT d.id) + tempSet AS datasets
@@ -481,8 +484,11 @@ class Neo4JService {
       application
     };
     if (concepts && concepts.length > 0) {
-      for (let i = 0, length = concepts.length; i < length; i++) {
-        query += QUERY_SEARCH_PARTS[i].replace('{depth}', `1..${depth}`);
+      for (let i = 0, length = concepts.length; i < length; i = i + 2) {
+        query += QUERY_SEARCH_PARTS[i];
+        if (depth !== 0) {
+          query += QUERY_SEARCH_PARTS[i + 1].replace('{depth}', `1..${depth}`);
+        }
 
         params[`concepts${i + 1}`] = concepts[i]; //.map(el => `'${el}'`).join(',');
       }
