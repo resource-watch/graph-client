@@ -293,11 +293,17 @@ class GraphRouter {
     } else {
       concepts = ctx.request.body.concepts;
     }
+    let depthParam = ctx.query.depth;
+    if (depthParam === undefined) {
+      depthParam = 15;
+    } else {
+      depthParam = parseInt(depthParam, 10);
+    }
     let datasetIds = null;
     if (concepts) {
       datasetIds = [];
       logger.info('Searching dataset with concepts', concepts);
-      const results = await neo4jService.querySearchDatasets(concepts, application);
+      const results = await neo4jService.querySearchDatasets(concepts, application, depthParam);
 
       const data = results.records ? results.records.map(el => {
         if (el._fields[0].length > 0) {
