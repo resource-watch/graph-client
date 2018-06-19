@@ -474,8 +474,14 @@ class Neo4JService {
     });
   }
 
-  async querySearchDatasets(concepts, application, depth = 15) {
+  async querySearchDatasets(concepts, application, depth ) {
     logger.debug('Searching datasets with concepts ', concepts);
+    let depthParam = depth;
+    if (depth === undefined) {
+      depthParam = 15;
+    } else {
+      depthParam = parseInt(depth, 10);
+    }
     let query = '';
     const params = {
       concepts1: [],
@@ -486,8 +492,8 @@ class Neo4JService {
     if (concepts && concepts.length > 0) {
       for (let i = 0, length = concepts.length; i < length; i = i + 2) {
         query += QUERY_SEARCH_PARTS[i];
-        if (+depth !== 0) {
-          query += QUERY_SEARCH_PARTS[i + 1].replace('{depth}', `1..${depth}`);
+        if (depthParam !== 0) {
+          query += QUERY_SEARCH_PARTS[i + 1].replace('{depth}', `1..${depthParam}`);
         }
 
         params[`concepts${i + 1}`] = concepts[i]; //.map(el => `'${el}'`).join(',');
