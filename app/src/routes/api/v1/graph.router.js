@@ -254,7 +254,15 @@ class GraphRouter {
       concepts = ctx.request.body.concepts;
     }
     logger.info('Searching dataset with concepts', concepts);
-    const results = await neo4jService.querySearchDatasets(concepts, application, ctx.query.depth);
+
+    let depthParam = ctx.query.depth;
+    logger.info('depth', depthParam);
+    if (depthParam === undefined) {
+      depthParam = 15;
+    } else {
+      depthParam = parseInt(depthParam, 10);
+    }
+    const results = await neo4jService.querySearchDatasets(concepts, application, depthParam);
 
     let datasetIds = [];
     const data = results.records ? results.records.map(el => {
