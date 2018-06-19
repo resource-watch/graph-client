@@ -486,7 +486,7 @@ class Neo4JService {
     if (concepts && concepts.length > 0) {
       for (let i = 0, length = concepts.length; i < length; i = i + 2) {
         query += QUERY_SEARCH_PARTS[i];
-        if (depth !== 0) {
+        if (+depth !== 0) {
           query += QUERY_SEARCH_PARTS[i + 1].replace('{depth}', `1..${depth}`);
         }
 
