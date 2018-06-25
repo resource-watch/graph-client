@@ -17,6 +17,19 @@ const CREATE_RELATION = `
   MERGE (resource)-[r:TAGGED_WITH {application: {application}}]->(concept) RETURN concept, resource, r
 `;
 
+const DELETE_RELATION = `
+  MATCH (resource:{resourceType} {id:{resourceId}})
+  MATCH (concept:CONCEPT)
+  MATCH (resource)-[r:TAGGED_WITH {application: {application}}]->(concept) DELETE r
+`;
+
+const DELETE_RELATION_ALL_APPS = `
+  MATCH (resource:{resourceType} {id:{resourceId}})
+  MATCH (concept:CONCEPT)
+  MATCH (resource)-[r:TAGGED_WITH]->(concept) DELETE r
+`;
+
+
 const CREATE_RELATION_FAVOURITE_AND_RESOURCE = `
 MATCH (resource:{resourceType} {id:{resourceId}})
 MERGE (user:USER{id:{userId}})
@@ -30,7 +43,7 @@ const CREATE_WIDGET_AND_RELATION = `
 `;
 
 const CREATE_LAYER_AND_RELATION = `
-  MATCH(dataset: DATASET {id: {idDataset}})
+  MATCH (dataset: DATASET {id: {idDataset}})
   MERGE (layer: LAYER {id: {idLayer}})
   MERGE (layer)-[r:BELONGS_TO]->(dataset) RETURN layer, dataset, r
 `;
@@ -92,21 +105,24 @@ const QUERY_SEARCH_PARTS= [`
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts1}
 WITH COLLECT(d.id) AS datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
+`, `
+OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*{depth}]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts1})
 WITH COLLECT(d.id) + datasets AS datasets
 `, `
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts2} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
+`, `
+OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*{depth}]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts2}) AND d.id IN datasets
 WITH COLLECT(d.id) + tempSet AS datasets
 `, `
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts3} AND d.id IN datasets
 WITH COLLECT(d.id) AS tempSet, datasets
-OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*1..15]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
+`, `
+OPTIONAL MATCH (c:CONCEPT)<-[:PART_OF|:IS_A|:QUALITY_OF*{depth}]-(c2:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE (c.id IN {concepts3}) AND d.id IN datasets
 WITH COLLECT(DISTINCT d.id) + tempSet AS datasets
 `];
@@ -180,6 +196,11 @@ OR size(filter(x IN c.synonyms WHERE size(filter(part in {search} WHERE toLower(
 RETURN d.id
 `;
 
+const QUERY_CONCEPTS_BY_DATASET = `
+MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET {id: {dataset}})
+RETURN c;
+`;
+
 class Neo4JService {
 
   constructor() {
@@ -241,6 +262,14 @@ class Neo4JService {
     });
   }
 
+  async getListConceptsByDataset(application, dataset) {
+    logger.debug('Getting list concepts by dataset');
+    return this.run(QUERY_CONCEPTS_BY_DATASET, {
+      application,
+      dataset
+    });
+  }
+
   async mostLikedDatasets(application) {
     logger.debug('Getting most liked datasets');
     return this.run(MOST_LIKED_DATASETS, {
@@ -261,6 +290,25 @@ class Neo4JService {
     return this.run(CHECK_EXISTS_RESOURCE.replace('{resourceType}', resourceType), {
       resourceId
     });
+  }
+
+  async deleteRelationWithConcepts(resourceType, resourceId, application) {
+    logger.debug('deleting relations with concepts, Type ', resourceType, ' and id ', resourceId);
+
+    if (application) {
+      logger.debug(DELETE_RELATION.replace('{resourceType}', resourceType));
+      await this.run(DELETE_RELATION.replace('{resourceType}', resourceType), {
+        resourceId,
+        application
+      });
+    } else {
+      logger.debug(DELETE_RELATION_ALL_APPS.replace('{resourceType}', resourceType));
+      await this.run(DELETE_RELATION_ALL_APPS.replace('{resourceType}', resourceType), {
+        resourceId,
+        application
+      });
+    }
+
   }
 
   async createRelationWithConcepts(resourceType, resourceId, concepts, application) {
@@ -426,8 +474,9 @@ class Neo4JService {
     });
   }
 
-  async querySearchDatasets(concepts, application) {
+  async querySearchDatasets(concepts, application, depth ) {
     logger.debug('Searching datasets with concepts ', concepts);
+    
     let query = '';
     const params = {
       concepts1: [],
@@ -436,10 +485,13 @@ class Neo4JService {
       application
     };
     if (concepts && concepts.length > 0) {
-      for (let i = 0, length = concepts.length; i < length; i++) {
+      for (let i = 0, length = concepts.length; i < length; i = i + 2) {
         query += QUERY_SEARCH_PARTS[i];
+        if (depth !== 0) {
+          query += QUERY_SEARCH_PARTS[i + 1].replace('{depth}', `1..${depth}`);
+        }
 
-        params[`concepts${i+1}`] = concepts[i]; //.map(el => `'${el}'`).join(',');
+        params[`concepts${i + 1}`] = concepts[i]; //.map(el => `'${el}'`).join(',');
       }
       query += QUERY_SEARCH_FINAL;
     }

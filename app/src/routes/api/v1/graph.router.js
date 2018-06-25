@@ -13,48 +13,72 @@ class GraphRouter {
 
   static async createDataset(ctx) {
     logger.info('Creating dataset node with id ', ctx.params.id);
+    ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.id}-graph`)
     ctx.body = await neo4jService.createDatasetNode(ctx.params.id);
   }
 
   static async associateResource(ctx) {
     ctx.assert(ctx.request.body && ctx.request.body.tags && ctx.request.body.tags.length > 0, 400, 'Tags body param is required');
     logger.info('Associating ', ctx.params.resourceType, ' node with id ', ctx.params.idResource, 'and tags ', ctx.request.body.tags);
+    ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.idResource}-graph`)
     ctx.body = await neo4jService.createRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.request.body.tags, ctx.request.body.application || 'rw');
+  }
+
+  static async updateResource(ctx) {
+    ctx.assert(ctx.request.body && ctx.request.body.tags && ctx.request.body.tags.length > 0, 400, 'Tags body param is required');
+    logger.info('Associating ', ctx.params.resourceType, ' node with id ', ctx.params.idResource, 'and tags ', ctx.request.body.tags);
+    await neo4jService.deleteRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.request.body.application || 'rw');
+    ctx.set('uncache', `${ctx.params.idResource}-graph`);
+    ctx.body = await neo4jService.createRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.request.body.tags, ctx.request.body.application || 'rw');
+  }
+
+  static async disassociateResource(ctx) {
+    logger.info('Dissasociating ', ctx.params.resourceType, ' node with id ', ctx.params.idResource, 'and app ', ctx.query.application);
+    await neo4jService.deleteRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.query.application || 'rw');
+    ctx.set('uncache', `${ctx.params.idResource}-graph`);
+    ctx.body = 'ok';
   }
 
   static async createWidgetNodeAndRelation(ctx) {
     logger.info('Creating widget node and relation with idWidget ', ctx.params.idWidget, ' and dataset ', ctx.params.idDataset);
+    ctx.set('uncache', `graph-widget widget-graph ${ctx.params.idWidget}-graph`)
     ctx.body = await neo4jService.createWidgetNodeAndRelation(ctx.params.idDataset, ctx.params.idWidget);
   }
 
   static async createLayerNodeAndRelation(ctx) {
     logger.info('Creating layer node and relation with idLayer ', ctx.params.idLayer, ' and dataset ', ctx.params.idDataset);
+    ctx.set('uncache', `graph-layer layer-graph ${ctx.params.idLayer}-graph`)
     ctx.body = await neo4jService.createLayerNodeAndRelation(ctx.params.idDataset, ctx.params.idLayer);
   }
 
   static async createMetadataNodeAndRelation(ctx) {
     ctx.assert(['DATASET', 'LAYER', 'WIDGET'].indexOf(ctx.params.resourceType) >= 0, 400, `Resource ${ctx.params.resourceType} invalid`);
     logger.info('Creating metadata node and relation with idWidget ', ctx.params.idMetadata, ' and resourcetype ', ctx.params.resourceType, ' and idresource', ctx.params.idResource);
+    ctx.set('uncache', `graph-metadata metadata-graph ${ctx.params.idMetadata}-graph`)
     ctx.body = await neo4jService.createMetadataNodeAndRelation(ctx.params.resourceType, ctx.params.idResource, ctx.params.idMetadata, );
   }
 
   static async deleteDataset(ctx) {
     logger.info('Deleting dataset node with id ', ctx.params.id);
+    ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.id}-graph`)
     ctx.body = await neo4jService.deleteDatasetNode(ctx.params.id);
   }
 
   static async deleteWidgetNodeAndRelation(ctx) {
     logger.info('Deleting widget node and relation with idWidget ', ctx.params.id);
+    ctx.set('uncache', `graph-widget widget-graph ${ctx.params.id}-graph`)
     ctx.body = await neo4jService.deleteWidgetNodeAndRelation(ctx.params.id);
   }
 
   static async deleteLayerNodeAndRelation(ctx) {
     logger.info('Deleting layer node and relation with idWidget ', ctx.params.id);
+    ctx.set('uncache', `graph-layer layer-graph ${ctx.params.id}-graph`)
     ctx.body = await neo4jService.deleteLayerNodeAndRelation(ctx.params.id);
   }
 
   static async deleteMetadata(ctx) {
     logger.info('Deleting metadata node and relation with idWidget ', ctx.params.id);
+    ctx.set('uncache', `graph-metadata metadata-graph ${ctx.params.id}-graph`)
     ctx.body = await neo4jService.deleteMetadata(ctx.params.id);
   }
 
@@ -81,6 +105,7 @@ class GraphRouter {
         };
       });
     }
+    ctx.set('cache', 'graph-dataset');
     ctx.body = {
       data
     };
@@ -109,6 +134,7 @@ class GraphRouter {
         };
       });
     }
+    ctx.set('cache', 'graph-default');
     ctx.body = {
       data
     };
@@ -137,6 +163,7 @@ class GraphRouter {
         };
       });
     }
+    ctx.set('cache', 'graph-default');
     ctx.body = {
       data
     };
@@ -169,8 +196,51 @@ class GraphRouter {
         };
       });
     }
+    ctx.set('cache', 'graph-default');
     ctx.body = {
       data
+    };
+  }
+
+  static async listConceptsByDataset(ctx) {
+    logger.info('Getting list concepts');
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    const dataset = ctx.params.dataset;
+    const response = await neo4jService.getListConceptsByDataset(application, dataset);
+    let data = [];
+    if (response.records) {
+      data = response.records.map((c) => {
+        return {
+          id: dataset,
+          type: 'graph',
+          attributes: c._fields[0].properties
+        }
+      });
+    }
+    // ctx.set('cache', 'graph-default');
+    ctx.body = {
+      data
+    };
+  }
+
+  static async listConceptsByDatasetsIds(ctx) {
+    logger.info('Getting list concepts by find-by-ids');
+    const application = ctx.query.application || ctx.query.app || 'rw';
+    const datasets = ctx.request.body.ids;
+    const data = await Promise.all(datasets.map(async(dataset) => {
+      const response = await neo4jService.getListConceptsByDataset(application, dataset);
+      if (response.records) {
+        return response.records.map((c) => {
+          return {
+            type: 'concept',
+            attributes: Object.assign({ dataset }, c._fields[0].properties)
+          };
+        });
+      }
+    }));
+    // ctx.set('cache', 'graph-default');
+    ctx.body = {
+      data: [].concat.apply([], data)
     };
   }
 
@@ -184,7 +254,15 @@ class GraphRouter {
       concepts = ctx.request.body.concepts;
     }
     logger.info('Searching dataset with concepts', concepts);
-    const results = await neo4jService.querySearchDatasets(concepts, application);
+
+    let depthParam = ctx.query.depth;
+    logger.info('depth', depthParam);
+    if (depthParam === undefined) {
+      depthParam = 15;
+    } else {
+      depthParam = parseInt(depthParam, 10);
+    }
+    const results = await neo4jService.querySearchDatasets(concepts, application, depthParam);
 
     let datasetIds = [];
     const data = results.records ? results.records.map(el => {
@@ -199,6 +277,7 @@ class GraphRouter {
     } else {
       result = [];
     }
+    ctx.set('cache', 'graph-dataset');
     ctx.body = {
       data: result
     };
@@ -214,11 +293,17 @@ class GraphRouter {
     } else {
       concepts = ctx.request.body.concepts;
     }
+    let depthParam = ctx.query.depth;
+    if (depthParam === undefined) {
+      depthParam = 15;
+    } else {
+      depthParam = parseInt(depthParam, 10);
+    }
     let datasetIds = null;
     if (concepts) {
       datasetIds = [];
       logger.info('Searching dataset with concepts', concepts);
-      const results = await neo4jService.querySearchDatasets(concepts, application);
+      const results = await neo4jService.querySearchDatasets(concepts, application, depthParam);
 
       const data = results.records ? results.records.map(el => {
         if (el._fields[0].length > 0) {
@@ -232,6 +317,7 @@ class GraphRouter {
     } else if (!datasetIds) {
       datasetIds = await neo4jService.sortDatasets(sort, datasetIds);
     }
+    ctx.set('cache', 'graph-dataset');
     ctx.body = {
       data: datasetIds
     };
@@ -255,7 +341,7 @@ class GraphRouter {
     } else {
       result = [];
     }
-
+    ctx.set('cache', 'graph-dataset');
     ctx.body = {
       data: data.filter((el) => result.indexOf(el.dataset) >= 0)
     };
@@ -288,7 +374,6 @@ class GraphRouter {
     } else {
       result = [];
     }
-
     ctx.body = {
       data: data.filter((el) => result.indexOf(el.dataset) >= 0)
     };
@@ -318,6 +403,7 @@ class GraphRouter {
     if (datasetIds.length > 0) {
       result = await datasetService.checkDatasets(datasetIds, ctx.query);
     }
+    ctx.set('cache', 'graph-dataset');
     ctx.body = {
       data: data.filter((el) => result.indexOf(el.dataset) >= 0).slice(0, ctx.query.limit || 3)
     };
@@ -344,6 +430,7 @@ class GraphRouter {
     if (datasetIds.length > 0) {
       result = await datasetService.checkDatasets(datasetIds, ctx.query);
     }
+    ctx.set('cache', 'graph-dataset');
     ctx.body = {
       data: data.filter((el) => result.indexOf(el.dataset) >= 0).slice(0, ctx.query.limit || 3)
     };
@@ -365,6 +452,7 @@ class GraphRouter {
         numberOfOcurrences: el._fieldLookup.dataset_tags
       };
     }) : [];
+    ctx.set('cache', 'graph-default');
     ctx.body = {
       data: datasetIds
     };
@@ -374,6 +462,7 @@ class GraphRouter {
     logger.info('Visited dataset');
     const user = ctx.request.body && ctx.request.body.loggedUser;
     await neo4jService.visitedDataset(ctx.params.id, user ? user.id : null);
+    ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.id}-graph`)
     ctx.body = {};
   }
 
@@ -414,6 +503,8 @@ async function checkExistsResource(ctx, next) {
 }
 
 router.get('/query/list-concepts', GraphRouter.listConcepts);
+router.get('/query/list-concepts/:dataset', GraphRouter.listConceptsByDataset);
+router.post('/query/list-concepts/find-by-ids', GraphRouter.listConceptsByDatasetsIds);
 router.get('/query/concepts-inferred', GraphRouter.conceptsInferred);
 router.post('/query/concepts-inferred', GraphRouter.conceptsInferred);
 router.get('/query/concepts-ancestors', GraphRouter.conceptsAncestors);
@@ -439,6 +530,8 @@ router.post('/widget/:idDataset/:idWidget', isAuthorized, checkExistsDataset, Gr
 router.post('/layer/:idDataset/:idLayer', isAuthorized, checkExistsDataset, GraphRouter.createLayerNodeAndRelation);
 router.post('/metadata/:resourceType/:idResource/:idMetadata', isAuthorized, checkExistsResource, GraphRouter.createMetadataNodeAndRelation);
 router.post('/:resourceType/:idResource/associate', isAuthorized, checkExistsResource, GraphRouter.associateResource);
+router.put('/:resourceType/:idResource/associate', isAuthorized, checkExistsResource, GraphRouter.updateResource);
+router.delete('/:resourceType/:idResource/associate', isAuthorized, checkExistsResource, GraphRouter.disassociateResource);
 router.post('/favourite/:resourceType/:idResource/:userId', isAuthorized, checkExistsResource, GraphRouter.createFavouriteRelationWithResource);
 
 router.delete('/favourite/:resourceType/:idResource/:userId', isAuthorized, checkExistsResource, GraphRouter.deleteFavouriteRelationWithResource);
