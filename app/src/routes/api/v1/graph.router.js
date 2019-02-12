@@ -224,7 +224,7 @@ class GraphRouter {
     static async listConceptsByDatasetsIds(ctx) {
         logger.info('Getting list concepts by find-by-ids');
         const application = ctx.query.application || ctx.query.app || 'rw';
-        const datasets = ctx.request.body.ids;
+        const datasets = ctx.request.body.ids.split(',');
         const data = await Promise.all(datasets.map(async (dataset) => {
             const response = await neo4jService.getListConceptsByDataset(application, dataset);
             if (response.records) {
