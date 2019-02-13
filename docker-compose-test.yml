@@ -5,8 +5,6 @@ services:
     ports:
       - "4500:4500"
     container_name: graph-test
-    env_file:
-      - dev.env
     environment:
       PORT: 4500
       NODE_PATH: app/src
