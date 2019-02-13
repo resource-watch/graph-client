@@ -1,8 +1,8 @@
 {
-    "logger": {
-        "name": "graph-client",
-        "level": "debug",
-        "toFile": false,
-        "dirLogFile": null
-    }
+  "logger": {
+    "name": "graph-client",
+    "level": "debug",
+    "toFile": false,
+    "dirLogFile": null
+  }
 }
