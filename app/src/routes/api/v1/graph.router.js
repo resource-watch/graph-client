@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 const logger = require('logger');
 const Router = require('koa-router');
 const neo4jService = require('services/neo4j.service');
@@ -11,14 +12,14 @@ class GraphRouter {
 
     static async createDataset(ctx) {
         logger.info('Creating dataset node with id ', ctx.params.id);
-        ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.id}-graph`)
+        ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.id}-graph`);
         ctx.body = await neo4jService.createDatasetNode(ctx.params.id);
     }
 
     static async associateResource(ctx) {
         ctx.assert(ctx.request.body && ctx.request.body.tags && ctx.request.body.tags.length > 0, 400, 'Tags body param is required');
         logger.info('Associating ', ctx.params.resourceType, ' node with id ', ctx.params.idResource, 'and tags ', ctx.request.body.tags);
-        ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.idResource}-graph`)
+        ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.idResource}-graph`);
         ctx.body = await neo4jService.createRelationWithConcepts(ctx.params.resourceType, ctx.params.idResource, ctx.request.body.tags, ctx.request.body.application || 'rw');
     }
 
@@ -39,44 +40,44 @@ class GraphRouter {
 
     static async createWidgetNodeAndRelation(ctx) {
         logger.info('Creating widget node and relation with idWidget ', ctx.params.idWidget, ' and dataset ', ctx.params.idDataset);
-        ctx.set('uncache', `graph-widget widget-graph ${ctx.params.idWidget}-graph`)
+        ctx.set('uncache', `graph-widget widget-graph ${ctx.params.idWidget}-graph`);
         ctx.body = await neo4jService.createWidgetNodeAndRelation(ctx.params.idDataset, ctx.params.idWidget);
     }
 
     static async createLayerNodeAndRelation(ctx) {
         logger.info('Creating layer node and relation with idLayer ', ctx.params.idLayer, ' and dataset ', ctx.params.idDataset);
-        ctx.set('uncache', `graph-layer layer-graph ${ctx.params.idLayer}-graph`)
+        ctx.set('uncache', `graph-layer layer-graph ${ctx.params.idLayer}-graph`);
         ctx.body = await neo4jService.createLayerNodeAndRelation(ctx.params.idDataset, ctx.params.idLayer);
     }
 
     static async createMetadataNodeAndRelation(ctx) {
         ctx.assert(['DATASET', 'LAYER', 'WIDGET'].indexOf(ctx.params.resourceType) >= 0, 400, `Resource ${ctx.params.resourceType} invalid`);
         logger.info('Creating metadata node and relation with idWidget ', ctx.params.idMetadata, ' and resourcetype ', ctx.params.resourceType, ' and idresource', ctx.params.idResource);
-        ctx.set('uncache', `graph-metadata metadata-graph ${ctx.params.idMetadata}-graph`)
+        ctx.set('uncache', `graph-metadata metadata-graph ${ctx.params.idMetadata}-graph`);
         ctx.body = await neo4jService.createMetadataNodeAndRelation(ctx.params.resourceType, ctx.params.idResource, ctx.params.idMetadata,);
     }
 
     static async deleteDataset(ctx) {
         logger.info('Deleting dataset node with id ', ctx.params.id);
-        ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.id}-graph`)
+        ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.id}-graph`);
         ctx.body = await neo4jService.deleteDatasetNode(ctx.params.id);
     }
 
     static async deleteWidgetNodeAndRelation(ctx) {
         logger.info('Deleting widget node and relation with idWidget ', ctx.params.id);
-        ctx.set('uncache', `graph-widget widget-graph ${ctx.params.id}-graph`)
+        ctx.set('uncache', `graph-widget widget-graph ${ctx.params.id}-graph`);
         ctx.body = await neo4jService.deleteWidgetNodeAndRelation(ctx.params.id);
     }
 
     static async deleteLayerNodeAndRelation(ctx) {
         logger.info('Deleting layer node and relation with idWidget ', ctx.params.id);
-        ctx.set('uncache', `graph-layer layer-graph ${ctx.params.id}-graph`)
+        ctx.set('uncache', `graph-layer layer-graph ${ctx.params.id}-graph`);
         ctx.body = await neo4jService.deleteLayerNodeAndRelation(ctx.params.id);
     }
 
     static async deleteMetadata(ctx) {
         logger.info('Deleting metadata node and relation with idWidget ', ctx.params.id);
-        ctx.set('uncache', `graph-metadata metadata-graph ${ctx.params.id}-graph`)
+        ctx.set('uncache', `graph-metadata metadata-graph ${ctx.params.id}-graph`);
         ctx.body = await neo4jService.deleteMetadata(ctx.params.id);
     }
 
@@ -96,12 +97,10 @@ class GraphRouter {
         const response = await neo4jService.mostLikedDatasets(application);
         let data = [];
         if (response) {
-            data = response.records.map((c) => {
-                return {
-                    id: c._fields[0],
-                    count: c._fields[1]
-                };
-            });
+            data = response.records.map((c) => ({
+                id: c._fields[0],
+                count: c._fields[1]
+            }));
         }
         ctx.set('cache', 'graph-dataset');
         ctx.body = {
@@ -113,7 +112,7 @@ class GraphRouter {
         let concepts = null;
         const application = ctx.query.application || ctx.query.app || 'rw';
         if (ctx.query.concepts) {
-            concepts = ctx.query.concepts.split(',').map(c => c.trim());
+            concepts = ctx.query.concepts.split(',').map((c) => c.trim());
         } else if (ctx.request.body) {
             concepts = ctx.request.body.concepts;
         }
@@ -123,14 +122,12 @@ class GraphRouter {
         const response = await neo4jService.getConceptsInferredFromList(concepts, application);
         let data = [];
         if (response) {
-            data = response.records.map((c) => {
-                return {
-                    id: c._fields[0],
-                    label: c._fields[1],
-                    synonyms: c._fields[2],
-                    labels: c._fields[3]
-                };
-            });
+            data = response.records.map((c) => ({
+                id: c._fields[0],
+                label: c._fields[1],
+                synonyms: c._fields[2],
+                labels: c._fields[3]
+            }));
         }
         ctx.set('cache', 'graph-default');
         ctx.body = {
@@ -142,7 +139,7 @@ class GraphRouter {
         let concepts = null;
         const application = ctx.query.application || ctx.query.app || 'rw';
         if (ctx.query.concepts) {
-            concepts = ctx.query.concepts.split(',').map(c => c.trim());
+            concepts = ctx.query.concepts.split(',').map((c) => c.trim());
         } else if (ctx.request.body) {
             concepts = ctx.request.body.concepts;
         }
@@ -152,14 +149,12 @@ class GraphRouter {
         const response = await neo4jService.getConceptsAncestorsFromList(concepts, application);
         let data = [];
         if (response) {
-            data = response.records.map((c) => {
-                return {
-                    id: c._fields[0],
-                    label: c._fields[1],
-                    synonyms: c._fields[2],
-                    labels: c._fields[3]
-                };
-            });
+            data = response.records.map((c) => ({
+                id: c._fields[0],
+                label: c._fields[1],
+                synonyms: c._fields[2],
+                labels: c._fields[3]
+            }));
         }
         ctx.set('cache', 'graph-default');
         ctx.body = {
@@ -174,7 +169,7 @@ class GraphRouter {
         const defaultIncludes = ['TOPIC', 'DATA_TYPE', 'TIME_PERIOD', 'FREQUENCY'];
         const sanitizeIncludes = [];
         if (includes) {
-            includes.forEach(el => {
+            includes.forEach((el) => {
                 if (defaultIncludes.indexOf(el.toUpperCase()) > -1) {
                     sanitizeIncludes.push(el.toUpperCase());
                 }
@@ -183,16 +178,14 @@ class GraphRouter {
         const response = await neo4jService.getListConcepts(application, sanitizeIncludes, ctx.query.search ? ctx.query.search.split(',') : null);
         let data = [];
         if (response.records) {
-            data = response.records.map((c) => {
-                return {
-                    id: c._fields[0],
-                    label: c._fields[1],
-                    synonyms: c._fields[2],
-                    labels: c._fields[3],
-                    numberOfDatasetsTagged: c._fields[4] ? c._fields[4].low : 0,
-                    datasets: c._fields[5]
-                };
-            });
+            data = response.records.map((c) => ({
+                id: c._fields[0],
+                label: c._fields[1],
+                synonyms: c._fields[2],
+                labels: c._fields[3],
+                numberOfDatasetsTagged: c._fields[4] ? c._fields[4].low : 0,
+                datasets: c._fields[5]
+            }));
         }
         ctx.set('cache', 'graph-default');
         ctx.body = {
@@ -203,17 +196,15 @@ class GraphRouter {
     static async listConceptsByDataset(ctx) {
         logger.info('Getting list concepts');
         const application = ctx.query.application || ctx.query.app || 'rw';
-        const dataset = ctx.params.dataset;
+        const { dataset } = ctx.params;
         const response = await neo4jService.getListConceptsByDataset(application, dataset);
         let data = [];
         if (response.records) {
-            data = response.records.map((c) => {
-                return {
-                    id: dataset,
-                    type: 'graph',
-                    attributes: c._fields[0].properties
-                }
-            });
+            data = response.records.map((c) => ({
+                id: dataset,
+                type: 'graph',
+                attributes: c._fields[0].properties
+            }));
         }
         // ctx.set('cache', 'graph-default');
         ctx.body = {
@@ -228,15 +219,16 @@ class GraphRouter {
         const data = await Promise.all(datasets.map(async (dataset) => {
             const response = await neo4jService.getListConceptsByDataset(application, dataset);
             if (response.records) {
-                return response.records.map(c => ({
+                return response.records.map((c) => ({
                     type: 'concept',
-                    attributes: Object.assign({ dataset }, c._fields[0].properties)
+                    attributes: { dataset, ...c._fields[0].properties }
                 }));
             }
+            return null;
         }));
         // ctx.set('cache', 'graph-default');
         ctx.body = {
-            data: [].concat.apply([], data)
+            data: [].concat(...data)
         };
     }
 
@@ -261,12 +253,15 @@ class GraphRouter {
         const results = await neo4jService.querySearchDatasets(concepts, application, depthParam);
 
         let datasetIds = [];
-        const data = results.records ? results.records.map(el => {
-            if (el._fields[0].length > 0) {
-                datasetIds = datasetIds.concat(el._fields[0]);
-            }
-            return el._fields[0];
-        }) : [];
+        if (results.records) {
+            results.records.map((el) => {
+                if (el._fields[0].length > 0) {
+                    datasetIds = datasetIds.concat(el._fields[0]);
+                }
+                return el._fields[0];
+            });
+        }
+
         let result = [];
         if (datasetIds.length > 0) {
             result = await datasetService.checkDatasets(datasetIds, ctx.query);
@@ -282,7 +277,7 @@ class GraphRouter {
     static async querySearchDatasetsIds(ctx) {
         let concepts = null;
         const application = ctx.query.application || ctx.query.app || 'rw';
-        const sort = ctx.query.sort;
+        const { sort } = ctx.query;
         if (ctx.method === 'GET') {
             // ctx.assert(ctx.query.concepts, 400, 'Concepts query params is required');
             concepts = ctx.query.concepts;
@@ -301,12 +296,14 @@ class GraphRouter {
             logger.info('Searching dataset with concepts', concepts);
             const results = await neo4jService.querySearchDatasets(concepts, application, depthParam);
 
-            const data = results.records ? results.records.map(el => {
-                if (el._fields[0].length > 0) {
-                    datasetIds = datasetIds.concat(el._fields[0]);
-                }
-                return el._fields[0];
-            }) : [];
+            if (results.records) {
+                results.records.map((el) => {
+                    if (el._fields[0].length > 0) {
+                        datasetIds = datasetIds.concat(el._fields[0]);
+                    }
+                    return el._fields[0];
+                });
+            }
         }
         if (datasetIds && datasetIds.length > 0 && sort && (sort.includes('most-viewed') || sort.includes('most-favorited'))) {
             datasetIds = await neo4jService.sortDatasets(sort, datasetIds);
@@ -324,7 +321,7 @@ class GraphRouter {
         const application = ctx.query.application || ctx.query.app || 'rw';
         const results = await neo4jService.queryMostViewed(application);
         const datasetIds = [];
-        const data = results.records ? results.records.map(el => {
+        const data = results.records ? results.records.map((el) => {
             datasetIds.push(el._fields[0]);
             return {
                 dataset: el._fields[0],
@@ -357,7 +354,7 @@ class GraphRouter {
         const results = await neo4jService.queryMostViewedByUser(user.id, application);
 
         const datasetIds = [];
-        const data = results.records ? results.records.map(el => {
+        const data = results.records ? results.records.map((el) => {
             datasetIds.push(el._fields[0]);
             return {
                 dataset: el._fields[0],
@@ -440,14 +437,16 @@ class GraphRouter {
         const results = await neo4jService.querySearchByLabelSynonymons(ctx.query.search ? ctx.query.search.split(' ') : '', application);
         logger.debug('AAA', results);
         const datasetIds = [];
-        const data = results && results.records ? results.records.map((el) => {
-            datasetIds.push(el._fields[0]);
-            return {
-                dataset: el._fields[0],
-                concepts: el._fields[1],
-                numberOfOcurrences: el._fieldLookup.dataset_tags
-            };
-        }) : [];
+        if (results && results.records) {
+            results.records.map((el) => {
+                datasetIds.push(el._fields[0]);
+                return {
+                    dataset: el._fields[0],
+                    concepts: el._fields[1],
+                    numberOfOcurrences: el._fieldLookup.dataset_tags
+                };
+            });
+        }
         ctx.set('cache', 'graph-default');
         ctx.body = {
             data: datasetIds
@@ -458,7 +457,7 @@ class GraphRouter {
         logger.info('Visited dataset');
         const user = ctx.request.body && ctx.request.body.loggedUser;
         await neo4jService.visitedDataset(ctx.params.id, user ? user.id : null);
-        ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.id}-graph`)
+        ctx.set('uncache', `graph-dataset dataset-graph ${ctx.params.id}-graph`);
         ctx.body = {};
     }
 

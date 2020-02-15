@@ -1,9 +1,0 @@
-base:
-  build: .
-  ports:
-    - "4500:4500"
-  container_name: graph-client
-  environment:
-    PORT: 4500
-    NODE_PATH: app/src
-

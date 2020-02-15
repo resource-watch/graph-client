@@ -1,7 +1,7 @@
-
 module.exports = (grunt) => {
 
     grunt.file.setBase('..');
+    // eslint-disable-next-line import/no-extraneous-dependencies
     require('load-grunt-tasks')(grunt);
 
     grunt.initConfig({
@@ -14,14 +14,6 @@ module.exports = (grunt) => {
                     port: process.env.PORT,
                     output: 'started'
                 }
-            },
-            test: {
-                options: {
-                    script: 'app/index.js',
-                    node_env: 'test',
-                    port: 5000,
-                    output: 'started'
-                }
             }
         },
 
@@ -30,6 +22,7 @@ module.exports = (grunt) => {
                 options: {
                     reporter: 'spec',
                     quiet: false,
+                    timeout: 10000,
                     clearRequireCache: true,
                 },
                 src: ['app/test/e2e/**/*.spec.js']
@@ -58,6 +51,7 @@ module.exports = (grunt) => {
                     spawn: true
                 }
             },
+
         },
 
         nyc: {
@@ -75,7 +69,9 @@ module.exports = (grunt) => {
         }
     });
 
-    grunt.registerTask('e2eTest', ['express:test', 'mochaTest:e2e']);
+    grunt.registerTask('e2eTest', ['mochaTest:e2e']);
+
+    grunt.registerTask('e2eTestCoverage', ['mocha_nyc:coverage']);
 
     grunt.registerTask('e2eTest-watch', ['watch:e2eTest']);
 
