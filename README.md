@@ -1,5 +1,8 @@
 # Graph client Microservice
 
+[![Build Status](https://travis-ci.org/resource-watch/graph-client.svg?branch=develop)](https://travis-ci.org/resource-watch/graph-client)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/5fbe8f9c23d81587d091/test_coverage)](https://codeclimate.com/github/resource-watch/graph-client/test_coverage)
+
 ## Dependencies
 
 You will need [Control Tower](https://github.com/control-tower/control-tower) up and running - either natively or with Docker. Refer to the project's README for information on how to set it up.
