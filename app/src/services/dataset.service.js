@@ -19,7 +19,7 @@ class DatasetService {
         });
         logger.debug('Returning ', result);
         if (result && result.data) {
-            return result.data.map(el => el.id);
+            return result.data.map((el) => el.id);
         }
         return [];
 

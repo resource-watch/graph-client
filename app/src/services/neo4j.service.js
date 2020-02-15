@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 const logger = require('logger');
 const config = require('config');
 const neo4j = require('neo4j-driver').v1;
@@ -313,7 +314,7 @@ class Neo4JService {
 
     async createRelationWithConcepts(resourceType, resourceId, concepts, application) {
         logger.debug('Creating relations with concepts, Type ', resourceType, ' and id ', resourceId, 'and concepts', concepts);
-        for (let i = 0, length = concepts.length; i < length; i++) {
+        for (let i = 0, { length } = concepts; i < length; i++) {
             logger.debug(CREATE_RELATION.replace('{resourceType}', resourceType));
             await this.run(CREATE_RELATION.replace('{resourceType}', resourceType), {
                 resourceId,
@@ -485,13 +486,13 @@ class Neo4JService {
             application
         };
         if (concepts && concepts.length > 0) {
-            for (let i = 0, length = concepts.length; i < length; i = i + 2) {
+            for (let i = 0, { length } = concepts; i < length; i += 2) {
                 query += QUERY_SEARCH_PARTS[i];
                 if (depth !== 0) {
                     query += QUERY_SEARCH_PARTS[i + 1].replace('{depth}', `1..${depth}`);
                 }
 
-                params[`concepts${i + 1}`] = concepts[i]; //.map(el => `'${el}'`).join(',');
+                params[`concepts${i + 1}`] = concepts[i]; // .map(el => `'${el}'`).join(',');
             }
             query += QUERY_SEARCH_FINAL;
         }
@@ -509,6 +510,7 @@ class Neo4JService {
         let query = null;
         let dir = 'ASC';
         if (sort.startsWith('-')) {
+            // eslint-disable-next-line no-param-reassign
             sort = sort.substr(1, sort.length);
             dir = 'DESC';
         }
