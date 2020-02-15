@@ -62,7 +62,8 @@
     "koa-simple-healthcheck": "^0.0.1",
     "neo4j-driver": "^1.2.0",
     "request": "^2.79.0",
-    "request-promise": "^4.1.1"
+    "request-promise": "^4.1.1",
+    "sleep": "^6.1.0"
   },
   "husky": {
     "hooks": {

@@ -8,6 +8,8 @@ const ctRegisterMicroservice = require('sd-ct-register-microservice-node');
 const koaSimpleHealthCheck = require('koa-simple-healthcheck');
 const ErrorSerializer = require('serializers/error.serializer');
 
+require('services/neo4j.service');
+
 const koaBody = require('koa-body')({
     multipart: true,
     jsonLimit: '50mb',
