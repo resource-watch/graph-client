@@ -1,10 +1,33 @@
-test:
-  extends:
-    file: base.yml
-    service: base
-  container_name: graph-client-test
-  environment:
-    NODE_ENV: test
-    CT_URL: http://mymachine:9000
-    API_VERSION: v1
-  command: test
+version: "3"
+services:
+  test:
+    build: .
+    ports:
+      - "4500:4500"
+    container_name: graph-test
+    environment:
+      NODE_ENV: test
+      PORT: 4500
+      NODE_PATH: app/src
+      CT_URL: http://mymachine:9000
+      CT_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im1pY3Jvc2VydmljZSIsImNyZWF0ZWRBdCI6IjIwMTYtMDktMTQifQ.IRCIRm1nfIQTfda_Wb6Pg-341zhV8soAgzw7dd5HxxQ
+      CT_REGISTER_MODE: auto
+      API_VERSION: v1
+      NEO4J_URI: bolt://graph:7687
+      NEO4J_USER:
+      NEO4J_PASSWORD:
+    command: test
+    volumes:
+      - ./app:/opt/graph-client/app
+    depends_on:
+      - graph
+
+  graph:
+    image: neo4j:3.2-enterprise
+    environment:
+      NEO4J_AUTH: none
+      NEO4J_ACCEPT_LICENSE_AGREEMENT: "yes"
+    ports:
+      - "7474"
+      - "7687"
+      - "7473"

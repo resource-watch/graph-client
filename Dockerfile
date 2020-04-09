@@ -1,5 +1,5 @@
-FROM node:8.1-alpine
-MAINTAINER raul.requero@vizzuality.com
+FROM node:12-alpine
+MAINTAINER info@vizzuality.com
 
 ENV NAME graph-client
 ENV USER graph-client
@@ -9,11 +9,11 @@ RUN apk update && apk upgrade && \
 
 RUN addgroup $USER && adduser -s /bin/bash -D -G $USER $USER
 
-RUN npm install --unsafe-perm -g grunt-cli bunyan pm2
+RUN yarn global add grunt-cli bunyan
 
 RUN mkdir -p /opt/$NAME
 COPY package.json /opt/$NAME/package.json
-RUN cd /opt/$NAME && npm install
+RUN cd /opt/$NAME && yarn
 
 COPY entrypoint.sh /opt/$NAME/entrypoint.sh
 COPY config /opt/$NAME/config
@@ -21,7 +21,11 @@ COPY config /opt/$NAME/config
 WORKDIR /opt/$NAME
 
 COPY ./app /opt/$NAME/app
-RUN chown $USER:$USER /opt/$NAME
+RUN chown -R $USER:$USER /opt/$NAME
+
+## Add the wait script to the image
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.7.3/wait /wait
+RUN chmod +x /wait
 
 # Tell Docker we are going to use this ports
 EXPOSE 4500

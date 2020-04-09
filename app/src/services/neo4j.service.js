@@ -1,5 +1,7 @@
+/* eslint-disable no-underscore-dangle */
 const logger = require('logger');
 const config = require('config');
+const sleep = require('sleep');
 const neo4j = require('neo4j-driver').v1;
 
 const NEO4J_URI = process.env.NEO4J_URI || `bolt://${config.get('neo4j.host')}:${config.get('neo4j.port')}`;
@@ -101,7 +103,7 @@ RETURN dataset, dataset_tags, number_of_ocurrences
 ORDER BY number_of_ocurrences DESC
 `;
 
-const QUERY_SEARCH_PARTS= [`
+const QUERY_SEARCH_PARTS = [`
 MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET)
 WHERE c.id IN {concepts1}
 WITH COLLECT(d.id) AS datasets
@@ -144,8 +146,8 @@ ORDER BY number_of_datasets_tagged DESC
 `];
 
 const QUERY_GET_LIST_CONCEPTS_WHERE = [
-  `size(filter(x IN LABELS(c)  WHERE x in {includes})) > 0`,
-  `size(filter(part IN {search} WHERE toLower(c.label) CONTAINS toLower(part))) > 0
+    `size(filter(x IN LABELS(c)  WHERE x in {includes})) > 0`,
+    `size(filter(part IN {search} WHERE toLower(c.label) CONTAINS toLower(part))) > 0
   OR size(filter(x IN c.synonyms WHERE size(filter(part in {search} WHERE toLower(x) CONTAINS toLower(part))) > 0)) > 0`
 ];
 
@@ -201,319 +203,357 @@ MATCH (c:CONCEPT)<-[:TAGGED_WITH {application: {application}}]-(d:DATASET {id: {
 RETURN c;
 `;
 
+let retries = 10;
+
 class Neo4JService {
 
-  constructor() {
-    logger.info('Connecting to neo4j');
+    constructor() {
+        try {
+            this.init().then(() => {
+                this.driver.onCompleted = () => {
+                    logger.info('[Neo4JService] Connected');
+                };
 
-    if (config.get('neo4j.password') === null || config.get('neo4j.user') === null) {
-      this.driver = neo4j.driver(NEO4J_URI);
-    } else {
-      this.driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(config.get('neo4j.user'), config.get('neo4j.password')));
-    }
-
-  }
-
-  async visitedDataset(dataset, userId) {
-    logger.info(`Visited dataset ${dataset} by user ${userId}`);
-    if (dataset) {
-      await this.run(INCREMENT_DATASET, {
-        dataset
-      });
-    }
-    if (dataset && userId) {
-      await this.run(VIEWED_BY_USER, {
-        dataset,
-        userId
-      });
-    }
-  }
-
-  async run(query, params) {
-    logger.info('Doing query ONLY READ ', query);
-    const session = this.driver.session();
-    const data = await session.run(query, params);
-    session.close();
-    return data;
-  }
-
-  async getListConcepts(application, includes = null, search = null) {
-    logger.debug('Getting list concepts');
-    let query = QUERY_GET_LIST_CONCEPTS[0];
-    if ((includes && includes.length > 0) || (search && search.length > 0)) {
-      query += ' WHERE ';
-      let gtOne = false;
-      if (includes && includes.length > 0) {
-        query += ` ${QUERY_GET_LIST_CONCEPTS_WHERE[0]} `;
-        gtOne = true;
-      }
-      if (search && search.length > 0) {
-        if (gtOne) {
-          query += ' AND ';
+                this.driver.onError = (error) => {
+                    this.retryConnection(error);
+                };
+            });
+        } catch (err) {
+            logger.error(err);
         }
-        query += ` ${QUERY_GET_LIST_CONCEPTS_WHERE[1]} `;
-      }
-    }
-    query += QUERY_GET_LIST_CONCEPTS[1];
-    return this.run(query, {
-      application,
-      includes,
-      search
-    });
-  }
-
-  async getListConceptsByDataset(application, dataset) {
-    logger.debug('Getting list concepts by dataset');
-    return this.run(QUERY_CONCEPTS_BY_DATASET, {
-      application,
-      dataset
-    });
-  }
-
-  async mostLikedDatasets(application) {
-    logger.debug('Getting most liked datasets');
-    return this.run(MOST_LIKED_DATASETS, {
-      application
-    });
-  }
-
-  async getConceptsInferredFromList(concepts, application) {
-    logger.debug('Getting list concepts');
-    return this.run(QUERY_GET_CONCEPTS_INFERRED_FROM_LIST, {
-      concepts,
-      application
-    });
-  }
-
-  async checkExistsResource(resourceType, resourceId) {
-    logger.debug('Checking if exist resource with type ', resourceType, ' and id ', resourceId);
-    return this.run(CHECK_EXISTS_RESOURCE.replace('{resourceType}', resourceType), {
-      resourceId
-    });
-  }
-
-  async deleteRelationWithConcepts(resourceType, resourceId, application) {
-    logger.debug('deleting relations with concepts, Type ', resourceType, ' and id ', resourceId);
-
-    if (application) {
-      logger.debug(DELETE_RELATION.replace('{resourceType}', resourceType));
-      await this.run(DELETE_RELATION.replace('{resourceType}', resourceType), {
-        resourceId,
-        application
-      });
-    } else {
-      logger.debug(DELETE_RELATION_ALL_APPS.replace('{resourceType}', resourceType));
-      await this.run(DELETE_RELATION_ALL_APPS.replace('{resourceType}', resourceType), {
-        resourceId,
-        application
-      });
     }
 
-  }
+    retryConnection(err) {
+        if (retries >= 0) {
+            retries--;
+            logger.error(`[Neo4JService] Failed to connect to Neo4j with error message "${err.message}", retrying...`);
+            sleep.sleep(2);
+            this.init().then(() => {
+                this.driver.onCompleted = () => {
+                    logger.info('[Neo4JService] Connected');
+                };
 
-  async createRelationWithConcepts(resourceType, resourceId, concepts, application) {
-    logger.debug('Creating relations with concepts, Type ', resourceType, ' and id ', resourceId, 'and concepts', concepts);
-    for (let i = 0, length = concepts.length; i < length; i++) {
-      logger.debug(CREATE_RELATION.replace('{resourceType}', resourceType));
-      await this.run(CREATE_RELATION.replace('{resourceType}', resourceType), {
-        resourceId,
-        label: concepts[i],
-        application
-      });
+                this.driver.onError = (error) => {
+                    this.retryConnection(error);
+                };
+            });
+        } else {
+            logger.error(err);
+            process.exit(1);
+        }
     }
-  }
 
-  async createFavouriteRelationWithResource(userId, resourceType, resourceId, application) {
-
-    logger.debug('Creating favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
-    logger.debug('Checking if exist user');
-    const users = await this.run(CHECK_EXISTS_USER, {
-      id: userId
-    });
-    if (!users.records || users.records.length === 0) {
-      logger.debug('Creating user node');
-      await this.run(CREATE_USER, {
-        id: userId
-      });
+    async init() {
+        if (config.get('neo4j.password') === null || config.get('neo4j.user') === null) {
+            logger.info(`[Neo4JService] Connecting to neo4j at ${NEO4J_URI}`);
+            this.driver = neo4j.driver(NEO4J_URI);
+        } else {
+            logger.info(`[Neo4JService] Connecting to neo4j at ${NEO4J_URI} with username ${config.get('neo4j.user')}`);
+            this.driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(config.get('neo4j.user'), config.get('neo4j.password')));
+        }
     }
-    await this.run(CREATE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
-      resourceId,
-      userId,
-      application
-    });
-  }
 
-  async deleteFavouriteRelationWithResource(userId, resourceType, resourceId, application) {
+    async visitedDataset(dataset, userId) {
+        logger.info(`Visited dataset ${dataset} by user ${userId}`);
+        if (dataset) {
+            await this.run(INCREMENT_DATASET, {
+                dataset
+            });
+        }
+        if (dataset && userId) {
+            await this.run(VIEWED_BY_USER, {
+                dataset,
+                userId
+            });
+        }
+    }
 
-    logger.debug('deleting favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId, 'and application ', application);
+    async run(query, params) {
+        logger.info('Doing query ONLY READ ', query);
+        const session = this.driver.session();
+        const data = await session.run(query, params);
+        session.close();
+        return data;
+    }
 
-    await this.run(DELETE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
-      resourceId,
-      userId,
-      application
-    });
-  }
+    async getListConcepts(application, includes = null, search = null) {
+        logger.debug('Getting list concepts');
+        let query = QUERY_GET_LIST_CONCEPTS[0];
+        if ((includes && includes.length > 0) || (search && search.length > 0)) {
+            query += ' WHERE ';
+            let gtOne = false;
+            if (includes && includes.length > 0) {
+                query += ` ${QUERY_GET_LIST_CONCEPTS_WHERE[0]} `;
+                gtOne = true;
+            }
+            if (search && search.length > 0) {
+                if (gtOne) {
+                    query += ' AND ';
+                }
+                query += ` ${QUERY_GET_LIST_CONCEPTS_WHERE[1]} `;
+            }
+        }
+        query += QUERY_GET_LIST_CONCEPTS[1];
+        return this.run(query, {
+            application,
+            includes,
+            search
+        });
+    }
 
-  async createDatasetNode(id) {
-    logger.debug('Creating dataset with id ', id);
-    return this.run(CREATE_DATASET, {
-      id
-    });
-  }
+    async getListConceptsByDataset(application, dataset) {
+        logger.debug('Getting list concepts by dataset');
+        return this.run(QUERY_CONCEPTS_BY_DATASET, {
+            application,
+            dataset
+        });
+    }
 
-  async createUserNode(id) {
-    logger.debug('Creating user with id ', id);
-    return this.run(CREATE_USER, {
-      id
-    });
-  }
+    async mostLikedDatasets(application) {
+        logger.debug('Getting most liked datasets');
+        return this.run(MOST_LIKED_DATASETS, {
+            application
+        });
+    }
 
-  async deleteDatasetNode(id) {
-    logger.debug('Deleting dataset with id ', id);
-    return this.run(DELETE_DATASET_NODE, {
-      id
-    });
-  }
+    async getConceptsInferredFromList(concepts, application) {
+        logger.debug('Getting list concepts');
+        return this.run(QUERY_GET_CONCEPTS_INFERRED_FROM_LIST, {
+            concepts,
+            application
+        });
+    }
 
-  async checkExistsDataset(id) {
-    logger.debug('Checking if exists dataset with id ', id);
-    return this.run(CHECK_EXISTS_DATASET, {
-      id
-    });
-  }
+    async checkExistsResource(resourceType, resourceId) {
+        logger.debug('Checking if exist resource with type ', resourceType, ' and id ', resourceId);
+        return this.run(CHECK_EXISTS_RESOURCE.replace('{resourceType}', resourceType), {
+            resourceId
+        });
+    }
 
-  async createWidgetNodeAndRelation(idDataset, idWidget) {
-    logger.debug('Creating widget and relation with id ', idWidget, '; id dataset', idDataset);
-    return this.run(CREATE_WIDGET_AND_RELATION, {
-      idWidget,
-      idDataset
-    });
-  }
+    async deleteRelationWithConcepts(resourceType, resourceId, application) {
+        logger.debug('deleting relations with concepts, Type ', resourceType, ' and id ', resourceId);
 
-  async createUserNodeAndRelation(idDataset, idWidget) {
-    logger.debug('Creating user and relation with id ', idWidget, '; id dataset', idDataset);
-    return this.run(CREATE_WIDGET_AND_RELATION, {
-      idWidget,
-      idDataset
-    });
-  }
-
-  async deleteWidgetNodeAndRelation(id) {
-    logger.debug('Deleting widget and relation with id ', id);
-    return this.run(DELETE_WIDGET_NODE, {
-      id
-    });
-  }
-
-  async createLayerNodeAndRelation(idDataset, idLayer) {
-    logger.debug('Creating layer and relation with id ', idLayer, '; id dataset', idDataset);
-    return this.run(CREATE_LAYER_AND_RELATION, {
-      idLayer,
-      idDataset
-    });
-  }
-
-  async deleteLayerNodeAndRelation(id) {
-    logger.debug('Deleting layer and relation with id ', id);
-    return this.run(DELETE_LAYER_NODE, {
-      id
-    });
-  }
-
-  async createMetadataNodeAndRelation(resourceType, resourceId, idMetadata) {
-    logger.debug('Creating metadata and relation with id-metadata ', idMetadata, '; resourceType ', resourceType, 'id dataset', resourceId);
-    return this.run(CREATE_METADATA_AND_RELATION.replace('{resourceType}', resourceType), {
-      idMetadata,
-      resourceId
-    });
-  }
-
-  async deleteMetadata(id) {
-    logger.debug('Deleting metadata and relation with id ', id);
-    return this.run(DELETE_METADATA_NODE, {
-      id
-    });
-  }
-
-  async querySimilarDatasets(datasets, application) {
-    logger.debug('Obtaining similar datasets of ', datasets);
-    return this.run(QUERY_SIMILAR_DATASET, {
-      datasets,
-      application
-    });
-  }
-
-  async querySimilarDatasetsIncludingDescendent(datasets, application) {
-    logger.debug('Obtaining similar datasets including descendent of ', datasets);
-    return this.run(QUERY_SIMILAR_DATASET_WITH_DESCENDENT, {
-      datasets,
-      application
-    });
-  }
-
-  async queryMostViewed(application) {
-    logger.debug('Obtaining dataset most viewed ');
-    return this.run(QUERY_MOST_VIEWED, {
-      application
-    });
-  }
-
-  async queryMostViewedByUser(userId, application) {
-    logger.debug('Obtaining dataset most viewed by user ', userId);
-    return this.run(QUERY_MOST_VIEWED_BY_USER, {
-      userId,
-      application
-    });
-  }
-
-  async querySearchByLabelSynonymons(search, application) {
-    logger.debug('Obtaining dataset by search ', search, 'and application ', application);
-    return this.run(QUERY_SEARCH_BY_LABEL_SYNONYMONS, {
-      search,
-      application
-    });
-  }
-
-  async querySearchDatasets(concepts, application, depth ) {
-    logger.debug('Searching datasets with concepts ', concepts);
-    
-    let query = '';
-    const params = {
-      concepts1: [],
-      concepts2: [],
-      concepts3: [],
-      application
-    };
-    if (concepts && concepts.length > 0) {
-      for (let i = 0, length = concepts.length; i < length; i = i + 2) {
-        query += QUERY_SEARCH_PARTS[i];
-        if (depth !== 0) {
-          query += QUERY_SEARCH_PARTS[i + 1].replace('{depth}', `1..${depth}`);
+        if (application) {
+            logger.debug(DELETE_RELATION.replace('{resourceType}', resourceType));
+            await this.run(DELETE_RELATION.replace('{resourceType}', resourceType), {
+                resourceId,
+                application
+            });
+        } else {
+            logger.debug(DELETE_RELATION_ALL_APPS.replace('{resourceType}', resourceType));
+            await this.run(DELETE_RELATION_ALL_APPS.replace('{resourceType}', resourceType), {
+                resourceId,
+                application
+            });
         }
 
-        params[`concepts${i + 1}`] = concepts[i]; //.map(el => `'${el}'`).join(',');
-      }
-      query += QUERY_SEARCH_FINAL;
     }
-    logger.info('query', query);
-    logger.info('params', params);
-    if (query) {
-      logger.debug('query', query);
-      logger.debug('params', params);
-      return this.run(query, params);
-    }
-    return null;
-  }
 
-  async sortDatasets(sort, datasets = null) {
-    let query = null;
-    let dir = 'ASC';
-    if (sort.startsWith('-')) {
-        sort = sort.substr(1, sort.length);
-        dir = 'DESC';
+    async createRelationWithConcepts(resourceType, resourceId, concepts, application) {
+        logger.debug('Creating relations with concepts, Type ', resourceType, ' and id ', resourceId, 'and concepts', concepts);
+        for (let i = 0, { length } = concepts; i < length; i++) {
+            logger.debug(CREATE_RELATION.replace('{resourceType}', resourceType));
+            await this.run(CREATE_RELATION.replace('{resourceType}', resourceType), {
+                resourceId,
+                label: concepts[i],
+                application
+            });
+        }
     }
-    if (sort === 'most-favorited') {
-      query = `
+
+    async createFavouriteRelationWithResource(userId, resourceType, resourceId, application) {
+
+        logger.debug('Creating favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId);
+        logger.debug('Checking if exist user');
+        const users = await this.run(CHECK_EXISTS_USER, {
+            id: userId
+        });
+        if (!users.records || users.records.length === 0) {
+            logger.debug('Creating user node');
+            await this.run(CREATE_USER, {
+                id: userId
+            });
+        }
+        await this.run(CREATE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
+            resourceId,
+            userId,
+            application
+        });
+    }
+
+    async deleteFavouriteRelationWithResource(userId, resourceType, resourceId, application) {
+
+        logger.debug('deleting favourite relation, Type ', resourceType, ' and id ', resourceId, 'and user', userId, 'and application ', application);
+
+        await this.run(DELETE_RELATION_FAVOURITE_AND_RESOURCE.replace('{resourceType}', resourceType), {
+            resourceId,
+            userId,
+            application
+        });
+    }
+
+    async createDatasetNode(id) {
+        logger.debug('Creating dataset with id ', id);
+        return this.run(CREATE_DATASET, {
+            id
+        });
+    }
+
+    async createUserNode(id) {
+        logger.debug('Creating user with id ', id);
+        return this.run(CREATE_USER, {
+            id
+        });
+    }
+
+    async deleteDatasetNode(id) {
+        logger.debug('Deleting dataset with id ', id);
+        return this.run(DELETE_DATASET_NODE, {
+            id
+        });
+    }
+
+    async checkExistsDataset(id) {
+        logger.debug('Checking if exists dataset with id ', id);
+        return this.run(CHECK_EXISTS_DATASET, {
+            id
+        });
+    }
+
+    async createWidgetNodeAndRelation(idDataset, idWidget) {
+        logger.debug('Creating widget and relation with id ', idWidget, '; id dataset', idDataset);
+        return this.run(CREATE_WIDGET_AND_RELATION, {
+            idWidget,
+            idDataset
+        });
+    }
+
+    async createUserNodeAndRelation(idDataset, idWidget) {
+        logger.debug('Creating user and relation with id ', idWidget, '; id dataset', idDataset);
+        return this.run(CREATE_WIDGET_AND_RELATION, {
+            idWidget,
+            idDataset
+        });
+    }
+
+    async deleteWidgetNodeAndRelation(id) {
+        logger.debug('Deleting widget and relation with id ', id);
+        return this.run(DELETE_WIDGET_NODE, {
+            id
+        });
+    }
+
+    async createLayerNodeAndRelation(idDataset, idLayer) {
+        logger.debug('Creating layer and relation with id ', idLayer, '; id dataset', idDataset);
+        return this.run(CREATE_LAYER_AND_RELATION, {
+            idLayer,
+            idDataset
+        });
+    }
+
+    async deleteLayerNodeAndRelation(id) {
+        logger.debug('Deleting layer and relation with id ', id);
+        return this.run(DELETE_LAYER_NODE, {
+            id
+        });
+    }
+
+    async createMetadataNodeAndRelation(resourceType, resourceId, idMetadata) {
+        logger.debug('Creating metadata and relation with id-metadata ', idMetadata, '; resourceType ', resourceType, 'id dataset', resourceId);
+        return this.run(CREATE_METADATA_AND_RELATION.replace('{resourceType}', resourceType), {
+            idMetadata,
+            resourceId
+        });
+    }
+
+    async deleteMetadata(id) {
+        logger.debug('Deleting metadata and relation with id ', id);
+        return this.run(DELETE_METADATA_NODE, {
+            id
+        });
+    }
+
+    async querySimilarDatasets(datasets, application) {
+        logger.debug('Obtaining similar datasets of ', datasets);
+        return this.run(QUERY_SIMILAR_DATASET, {
+            datasets,
+            application
+        });
+    }
+
+    async querySimilarDatasetsIncludingDescendent(datasets, application) {
+        logger.debug('Obtaining similar datasets including descendent of ', datasets);
+        return this.run(QUERY_SIMILAR_DATASET_WITH_DESCENDENT, {
+            datasets,
+            application
+        });
+    }
+
+    async queryMostViewed(application) {
+        logger.debug('Obtaining dataset most viewed ');
+        return this.run(QUERY_MOST_VIEWED, {
+            application
+        });
+    }
+
+    async queryMostViewedByUser(userId, application) {
+        logger.debug('Obtaining dataset most viewed by user ', userId);
+        return this.run(QUERY_MOST_VIEWED_BY_USER, {
+            userId,
+            application
+        });
+    }
+
+    async querySearchByLabelSynonymons(search, application) {
+        logger.debug('Obtaining dataset by search ', search, 'and application ', application);
+        return this.run(QUERY_SEARCH_BY_LABEL_SYNONYMONS, {
+            search,
+            application
+        });
+    }
+
+    async querySearchDatasets(concepts, application, depth) {
+        logger.debug('Searching datasets with concepts ', concepts);
+
+        let query = '';
+        const params = {
+            concepts1: [],
+            concepts2: [],
+            concepts3: [],
+            application
+        };
+        if (concepts && concepts.length > 0) {
+            for (let i = 0, { length } = concepts; i < length; i += 2) {
+                query += QUERY_SEARCH_PARTS[i];
+                if (depth !== 0) {
+                    query += QUERY_SEARCH_PARTS[i + 1].replace('{depth}', `1..${depth}`);
+                }
+
+                params[`concepts${i + 1}`] = concepts[i]; // .map(el => `'${el}'`).join(',');
+            }
+            query += QUERY_SEARCH_FINAL;
+        }
+        logger.info('query', query);
+        logger.info('params', params);
+        if (query) {
+            logger.debug('query', query);
+            logger.debug('params', params);
+            return this.run(query, params);
+        }
+        return null;
+    }
+
+    async sortDatasets(sort, datasets = null) {
+        let query = null;
+        let dir = 'ASC';
+        if (sort.startsWith('-')) {
+            // eslint-disable-next-line no-param-reassign
+            sort = sort.substr(1, sort.length);
+            dir = 'DESC';
+        }
+        if (sort === 'most-favorited') {
+            query = `
         MATCH (d:DATASET)
         OPTIONAL MATCH (d)<-[f:FAVOURITE]-()
         WITH d, COUNT(f) as favorites
@@ -521,27 +561,27 @@ class Neo4JService {
         RETURN d.id
         ORDER BY favorites ${dir}
       `;
-    }
-    if (sort === 'most-viewed') {
-      query = `
+        }
+        if (sort === 'most-viewed') {
+            query = `
         MATCH (d:DATASET)
         ${datasets ? `WHERE d.id IN {datasets}` : ''}
         return d.id
         ORDER BY d.views ${dir}
       `;
-    }
-    const results = await this.run(query, { datasets });
-    let datasetIds = [];
-    if (results.records) {
-      results.records.map(el => {
-        if (el._fields[0].length > 0) {
-          datasetIds = datasetIds.concat(el._fields[0]);
         }
-        return el._fields[0];
-      });
+        const results = await this.run(query, { datasets });
+        let datasetIds = [];
+        if (results.records) {
+            results.records.map((el) => {
+                if (el._fields[0].length > 0) {
+                    datasetIds = datasetIds.concat(el._fields[0]);
+                }
+                return el._fields[0];
+            });
+        }
+        return datasetIds;
     }
-    return datasetIds;
-  }
 
 }
 

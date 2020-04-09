@@ -1,11 +1,14 @@
 {
-    "service": {
-        "port": "PORT"
-    },
-    "neo4j": {
-        "host": "GRAPH_1_PORT_7687_TCP_ADDR",
-        "port": "GRAPH_1_PORT_7687_TCP_PORT",
-        "user": "NEO4J_USER",
-        "password": "NEO4J_PASSWORD"
-    }
+  "service": {
+    "port": "PORT"
+  },
+  "neo4j": {
+    "host": "GRAPH_1_PORT_7687_TCP_ADDR",
+    "port": "GRAPH_1_PORT_7687_TCP_PORT",
+    "user": "NEO4J_USER",
+    "password": "NEO4J_PASSWORD"
+  },
+  "logger": {
+    "level": "LOGGER_LEVEL"
+  }
 }

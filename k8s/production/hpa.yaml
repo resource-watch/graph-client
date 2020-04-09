@@ -1,13 +1,13 @@
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {name}
+  name: graph-client
   namespace: default
 spec:
   scaleTargetRef:
     apiVersion: apps/v1beta1
     kind: Deployment
-    name: {name}
+    name: graph-client
   minReplicas: 2
   maxReplicas: 3
   targetCPUUtilizationPercentage: 50

@@ -2,4 +2,7 @@ node_modules/
 .env
 /.vscode
 npm-debug.log
-
+dev.env
+.eslintcache
+coverage
+.nyc_output

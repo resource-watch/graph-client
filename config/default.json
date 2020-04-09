@@ -1,18 +1,18 @@
 {
-     "logger": {
-        "name": "graph-client-DEV",
-        "level": "debug",
-        "toFile": false,
-        "dirLogFile": null
-    },
-    "service": {
-        "name": "Node Skeleton",
-        "port": 4500
-    },
-    "neo4j": {
-        "host": null,
-        "port": null,
-        "user": null,
-        "password": null
-    }
+  "logger": {
+    "name": "graph-client-DEV",
+    "level": "debug",
+    "toFile": false,
+    "dirLogFile": null
+  },
+  "service": {
+    "name": "Node Skeleton",
+    "port": 4500
+  },
+  "neo4j": {
+    "host": null,
+    "port": null,
+    "user": null,
+    "password": null
+  }
 }
