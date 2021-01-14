@@ -20,6 +20,7 @@ env:
     - NEO4J_URI=bolt://localhost:7687
     - NEO4J_USER=
     - NEO4J_PASSWORD=
+    - FASTLY_ENABLED=false
 
 before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
