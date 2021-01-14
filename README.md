@@ -1,6 +1,6 @@
 # Graph client Microservice
 
-[![Build Status](https://travis-ci.org/resource-watch/graph-client.svg?branch=develop)](https://travis-ci.org/resource-watch/graph-client)
+[![Build Status](https://travis-ci.com/resource-watch/graph-client.svg?branch=dev)](https://travis-ci.com/resource-watch/graph-client)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/5fbe8f9c23d81587d091/test_coverage)](https://codeclimate.com/github/resource-watch/graph-client/test_coverage)
 
 ## Dependencies
