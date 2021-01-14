@@ -16,6 +16,7 @@ services:
       NEO4J_USER:
       NEO4J_PASSWORD:
       CT_REGISTER_MODE: auto
+      FASTLY_ENABLED: "false"
     command: develop
     volumes:
       - ./app:/opt/graph-client/app
