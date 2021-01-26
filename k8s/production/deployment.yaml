@@ -95,7 +95,7 @@ spec:
                   key: FASTLY_SERVICEID
                   name: mssecrets
                   optional: true
-          image: vizzuality/graph-client
+          image: gfwdockerhub/graph-client
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
