@@ -12,7 +12,6 @@
 	}, {
 		"path": "/v1/graph/dataset/:idDataset",
 		"method": "POST",
-		"authenticated": true,
 		"redirect": {
 			"method": "POST",
 			"path": "/api/v1/graph/dataset/:idDataset"
@@ -27,7 +26,6 @@
 	}, {
 		"path": "/v1/graph/widget/:idDataset/:idWidget",
 		"method": "POST",
-		"authenticated": true,
 		"redirect": {
 			"method": "POST",
 			"path": "/api/v1/graph/widget/:idDataset/:idWidget"
@@ -35,7 +33,6 @@
 	}, {
 		"path": "/v1/graph/layer/:idDataset/:idLayer",
 		"method": "POST",
-		"authenticated": true,
 		"redirect": {
 			"method": "POST",
 			"path": "/api/v1/graph/layer/:idDataset/:idLayer"
@@ -43,7 +40,6 @@
 	}, {
 		"path": "/v1/graph/metadata/:resourceType/:idResource/:idMetadata",
 		"method": "POST",
-		"authenticated": true,
 		"redirect": {
 			"method": "POST",
 			"path": "/api/v1/graph/metadata/:resourceType/:idResource/:idMetadata"
@@ -51,7 +47,6 @@
 	}, {
 		"path": "/v1/graph/favourite/:resourceType/:idResource/:userId",
 		"method": "POST",
-		"authenticated": true,
 		"redirect": {
 			"method": "POST",
 			"path": "/api/v1/graph/favourite/:resourceType/:idResource/:userId"
@@ -59,7 +54,6 @@
 	}, {
 		"path": "/v1/graph/:resource/:id/associate",
 		"method": "POST",
-		"authenticated": true,
 		"redirect": {
 			"method": "POST",
 			"path": "/api/v1/graph/:resource/:id/associate"
@@ -67,7 +61,6 @@
 	}, {
 		"path": "/v1/graph/:resource/:id/associate",
 		"method": "PUT",
-		"authenticated": true,
 		"redirect": {
 			"method": "PUT",
 			"path": "/api/v1/graph/:resource/:id/associate"
@@ -75,7 +68,6 @@
 	}, {
 		"path": "/v1/graph/:resource/:id/associate",
 		"method": "DELETE",
-		"authenticated": true,
 		"redirect": {
 			"method": "DELETE",
 			"path": "/api/v1/graph/:resource/:id/associate"
@@ -83,7 +75,6 @@
 	}, {
 		"path": "/v1/graph/dataset/:id",
 		"method": "DELETE",
-		"authenticated": true,
 		"redirect": {
 			"method": "DELETE",
 			"path": "/api/v1/graph/dataset/:id"
@@ -91,7 +82,6 @@
 	}, {
 		"path": "/v1/graph/widget/:id",
 		"method": "DELETE",
-		"authenticated": true,
 		"redirect": {
 			"method": "DELETE",
 			"path": "/api/v1/graph/widget/:id"
@@ -99,7 +89,6 @@
 	}, {
 		"path": "/v1/graph/layer/:id",
 		"method": "DELETE",
-		"authenticated": true,
 		"redirect": {
 			"method": "DELETE",
 			"path": "/api/v1/graph/layer/:id"
@@ -107,7 +96,6 @@
 	}, {
 		"path": "/v1/graph/metadata/:id",
 		"method": "DELETE",
-		"authenticated": true,
 		"redirect": {
 			"method": "DELETE",
 			"path": "/api/v1/graph/metadata/:id"
@@ -115,7 +103,6 @@
 	}, {
 		"path": "/v1/graph/favourite/:resourceType/:idResource/:userId",
 		"method": "DELETE",
-		"authenticated": true,
 		"redirect": {
 			"method": "DELETE",
 			"path": "/api/v1/graph/favourite/:resourceType/:idResource/:userId"
@@ -221,7 +208,6 @@
 	}, {
 		"path": "/v1/graph/query/most-viewed-by-user",
 		"method": "GET",
-		"authenticated": true,
 		"redirect": {
 			"method": "GET",
 			"path": "/api/v1/graph/query/most-viewed-by-user"

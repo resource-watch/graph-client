@@ -469,8 +469,8 @@ async function isAuthorized(ctx, next) {
         user = JSON.parse(ctx.request.query.loggedUser);
     }
 
-    if (!user || user.id !== 'microservice') {
-        ctx.throw(403, 'Not authorized');
+    if (user.id !== 'microservice') {
+        ctx.throw(401, 'Unauthorized');
         return;
     }
     await next();

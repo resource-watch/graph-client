@@ -1,12 +1,12 @@
 {
   "logger": {
-    "name": "graph-client-DEV",
+    "name": "graph-client",
     "level": "debug",
     "toFile": false,
     "dirLogFile": null
   },
   "service": {
-    "name": "Node Skeleton",
+    "name": "Graph client",
     "port": 4500
   },
   "neo4j": {
