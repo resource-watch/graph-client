@@ -1,237 +1,275 @@
 {
-	"name": "graph-client",
-	"cache": ["graph-client"],
-	"uncache": ["graph-client"],
-	"endpoints": [{
-		"path": "/v1/graph/query",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query"
-		}
-	}, {
-		"path": "/v1/graph/dataset/:idDataset",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/dataset/:idDataset"
-		}
-	}, {
-		"path": "/v1/graph/dataset/:idDataset/visited",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/dataset/:idDataset/visited"
-		}
-	}, {
-		"path": "/v1/graph/widget/:idDataset/:idWidget",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/widget/:idDataset/:idWidget"
-		}
-	}, {
-		"path": "/v1/graph/layer/:idDataset/:idLayer",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/layer/:idDataset/:idLayer"
-		}
-	}, {
-		"path": "/v1/graph/metadata/:resourceType/:idResource/:idMetadata",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/metadata/:resourceType/:idResource/:idMetadata"
-		}
-	}, {
-		"path": "/v1/graph/favourite/:resourceType/:idResource/:userId",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/favourite/:resourceType/:idResource/:userId"
-		}
-	}, {
-		"path": "/v1/graph/:resource/:id/associate",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/:resource/:id/associate"
-		}
-	}, {
-		"path": "/v1/graph/:resource/:id/associate",
-		"method": "PUT",
-		"redirect": {
-			"method": "PUT",
-			"path": "/api/v1/graph/:resource/:id/associate"
-		}
-	}, {
-		"path": "/v1/graph/:resource/:id/associate",
-		"method": "DELETE",
-		"redirect": {
-			"method": "DELETE",
-			"path": "/api/v1/graph/:resource/:id/associate"
-		}
-	}, {
-		"path": "/v1/graph/dataset/:id",
-		"method": "DELETE",
-		"redirect": {
-			"method": "DELETE",
-			"path": "/api/v1/graph/dataset/:id"
-		}
-	}, {
-		"path": "/v1/graph/widget/:id",
-		"method": "DELETE",
-		"redirect": {
-			"method": "DELETE",
-			"path": "/api/v1/graph/widget/:id"
-		}
-	}, {
-		"path": "/v1/graph/layer/:id",
-		"method": "DELETE",
-		"redirect": {
-			"method": "DELETE",
-			"path": "/api/v1/graph/layer/:id"
-		}
-	}, {
-		"path": "/v1/graph/metadata/:id",
-		"method": "DELETE",
-		"redirect": {
-			"method": "DELETE",
-			"path": "/api/v1/graph/metadata/:id"
-		}
-	}, {
-		"path": "/v1/graph/favourite/:resourceType/:idResource/:userId",
-		"method": "DELETE",
-		"redirect": {
-			"method": "DELETE",
-			"path": "/api/v1/graph/favourite/:resourceType/:idResource/:userId"
-		}
-	}, {
-		"path": "/v1/graph/query/similar-dataset",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/similar-dataset"
-		}
-	}, {
-		"path": "/v1/graph/query/similar-dataset/:dataset",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/similar-dataset/:dataset"
-		}
-	}, {
-		"path": "/v1/graph/query/list-concepts",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/list-concepts"
-		}
-	}, {
-		"path": "/v1/graph/query/concepts-inferred",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/concepts-inferred"
-		}
-	}, {
-		"path": "/v1/graph/query/concepts-inferred",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/query/concepts-inferred"
-		}
-	}, {
-		"path": "/v1/graph/query/concepts-ancestors",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/concepts-ancestors"
-		}
-	}, {
-		"path": "/v1/graph/query/concepts-ancestors",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/query/concepts-ancestors"
-		}
-	}, {
-		"path": "/v1/graph/query/similar-dataset-including-descendent",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/similar-dataset-including-descendent"
-		}
-	}, {
-		"path": "/v1/graph/query/similar-dataset-including-descendent/:dataset",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/similar-dataset-including-descendent/:dataset"
-		}
-	}, {
-		"path": "/v1/graph/query/search-datasets",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/search-datasets"
-		}
-	}, {
-		"path": "/v1/graph/query/search-datasets-ids",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/search-datasets-ids"
-		}
-	}, {
-		"path": "/v1/graph/query/most-liked-datasets",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/most-liked-datasets"
-		}
-	}, {
-		"path": "/v1/graph/query/search-datasets",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/query/search-datasets"
-		}
-	}, {
-		"path": "/v1/graph/query/most-viewed",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/most-viewed"
-		}
-	}, {
-		"path": "/v1/graph/query/most-viewed-by-user",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/most-viewed-by-user"
-		}
-	}, {
-		"path": "/v1/graph/query/search-by-label-synonyms",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/search-by-label-synonyms"
-		}
-	},{
-		"path": "/v1/graph/query/list-concepts/:dataset",
-		"method": "GET",
-		"redirect": {
-			"method": "GET",
-			"path": "/api/v1/graph/query/list-concepts/:dataset"
-		}
-	},{
-		"path": "/v1/graph/find-by-ids",
-		"method": "POST",
-		"redirect": {
-			"method": "POST",
-			"path": "/api/v1/graph/query/list-concepts/find-by-ids"
-		}
-	}]
+  "name": "graph-client",
+  "cache": [
+    "graph-client"
+  ],
+  "uncache": [
+    "graph-client"
+  ],
+  "endpoints": [
+    {
+      "path": "/v1/graph/query",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query"
+      }
+    },
+    {
+      "path": "/v1/graph/dataset/{datasetId}Dataset",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/dataset/{datasetId}Dataset"
+      }
+    },
+    {
+      "path": "/v1/graph/dataset/{datasetId}Dataset/visited",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/dataset/{datasetId}Dataset/visited"
+      }
+    },
+    {
+      "path": "/v1/graph/widget/:idDataset/:idWidget",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/widget/:idDataset/:idWidget"
+      }
+    },
+    {
+      "path": "/v1/graph/layer/:idDataset/:idLayer",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/layer/:idDataset/:idLayer"
+      }
+    },
+    {
+      "path": "/v1/graph/metadata/{resourceType}/{resourceId}/{metadataId}",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/metadata/{resourceType}/{resourceId}/{metadataId}"
+      }
+    },
+    {
+      "path": "/v1/graph/favourite/{resourceType}/{resourceId}/{userId}",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/favourite/{resourceType}/{resourceId}/{userId}"
+      }
+    },
+    {
+      "path": "/v1/graph/{resourceType}/{resourceId}/associate",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/{resourceType}/{resourceId}/associate"
+      }
+    },
+    {
+      "path": "/v1/graph/{resourceType}/{resourceId}/associate",
+      "method": "PUT",
+      "redirect": {
+        "method": "PUT",
+        "path": "/api/v1/graph/{resourceType}/{resourceId}/associate"
+      }
+    },
+    {
+      "path": "/v1/graph/{resourceType}/{resourceId}/associate",
+      "method": "DELETE",
+      "redirect": {
+        "method": "DELETE",
+        "path": "/api/v1/graph/{resourceType}/{resourceId}/associate"
+      }
+    },
+    {
+      "path": "/v1/graph/dataset/{datasetId}",
+      "method": "DELETE",
+      "redirect": {
+        "method": "DELETE",
+        "path": "/api/v1/graph/dataset/{datasetId}"
+      }
+    },
+    {
+      "path": "/v1/graph/widget/:id",
+      "method": "DELETE",
+      "redirect": {
+        "method": "DELETE",
+        "path": "/api/v1/graph/widget/:id"
+      }
+    },
+    {
+      "path": "/v1/graph/layer/:id",
+      "method": "DELETE",
+      "redirect": {
+        "method": "DELETE",
+        "path": "/api/v1/graph/layer/:id"
+      }
+    },
+    {
+      "path": "/v1/graph/metadata/:id",
+      "method": "DELETE",
+      "redirect": {
+        "method": "DELETE",
+        "path": "/api/v1/graph/metadata/:id"
+      }
+    },
+    {
+      "path": "/v1/graph/favourite/{resourceType}/{resourceId}/{userId}",
+      "method": "DELETE",
+      "redirect": {
+        "method": "DELETE",
+        "path": "/api/v1/graph/favourite/{resourceType}/{resourceId}/{userId}"
+      }
+    },
+    {
+      "path": "/v1/graph/query/similar-dataset",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/similar-dataset"
+      }
+    },
+    {
+      "path": "/v1/graph/query/similar-dataset/{datasetId}",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/similar-dataset/{datasetId}"
+      }
+    },
+    {
+      "path": "/v1/graph/query/list-concepts",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/list-concepts"
+      }
+    },
+    {
+      "path": "/v1/graph/query/concepts-inferred",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/concepts-inferred"
+      }
+    },
+    {
+      "path": "/v1/graph/query/concepts-inferred",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/query/concepts-inferred"
+      }
+    },
+    {
+      "path": "/v1/graph/query/concepts-ancestors",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/concepts-ancestors"
+      }
+    },
+    {
+      "path": "/v1/graph/query/concepts-ancestors",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/query/concepts-ancestors"
+      }
+    },
+    {
+      "path": "/v1/graph/query/similar-dataset-including-descendent",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/similar-dataset-including-descendent"
+      }
+    },
+    {
+      "path": "/v1/graph/query/similar-dataset-including-descendent/{datasetId}",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/similar-dataset-including-descendent/{datasetId}"
+      }
+    },
+    {
+      "path": "/v1/graph/query/search-datasets",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/search-datasets"
+      }
+    },
+    {
+      "path": "/v1/graph/query/search-datasets-ids",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/search-datasets-ids"
+      }
+    },
+    {
+      "path": "/v1/graph/query/most-liked-datasets",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/most-liked-datasets"
+      }
+    },
+    {
+      "path": "/v1/graph/query/search-datasets",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/query/search-datasets"
+      }
+    },
+    {
+      "path": "/v1/graph/query/most-viewed",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/most-viewed"
+      }
+    },
+    {
+      "path": "/v1/graph/query/most-viewed-by-user",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/most-viewed-by-user"
+      }
+    },
+    {
+      "path": "/v1/graph/query/search-by-label-synonyms",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/search-by-label-synonyms"
+      }
+    },
+    {
+      "path": "/v1/graph/query/list-concepts/{datasetId}",
+      "method": "GET",
+      "redirect": {
+        "method": "GET",
+        "path": "/api/v1/graph/query/list-concepts/{datasetId}"
+      }
+    },
+    {
+      "path": "/v1/graph/find-by-ids",
+      "method": "POST",
+      "redirect": {
+        "method": "POST",
+        "path": "/api/v1/graph/query/list-concepts/find-by-ids"
+      }
+    }
+  ]
 }
