@@ -1,5 +1,5 @@
 const logger = require('logger');
-const ctRegisterMicroservice = require('sd-ct-register-microservice-node');
+const { RWAPIMicroservice } = require('rw-api-microservice-node');
 
 class DatasetService {
 
@@ -8,7 +8,7 @@ class DatasetService {
         if (query) {
             delete query.loggedUser;
         }
-        const result = await ctRegisterMicroservice.requestToMicroservice({
+        const result = await RWAPIMicroservice.requestToMicroservice({
             uri: '/dataset/find-by-ids',
             method: 'POST',
             json: true,
